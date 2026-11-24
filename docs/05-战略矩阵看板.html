@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>抖音兴趣卡 · 三模型多维战略与12大原型全景看板</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    color: var(--foreground);
+    line-height: 1.5;
+    font-size: 13px;
+  }
+  .wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+  }
+  .section-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+  .section-sub {
+    font-size: 11px;
+    color: var(--muted-foreground);
+  }
+
+  /* Dual-layer architecture funnel */
+  .arch-grid {
+    display: grid;
+    grid-template-columns: 1fr 18px 1fr 18px 1fr;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .arch-col {
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .arch-col.l1 { border-top: 3px solid var(--chart-1); }
+  .arch-col.gate { border-top: 3px solid var(--warning); }
+  .arch-col.l2 { border-top: 3px solid var(--chart-2); }
+  .arch-badge {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+  }
+  .arch-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+  .arch-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11.5px;
+    color: var(--muted-foreground);
+  }
+  .arch-list li::before {
+    content: "• ";
+    color: var(--primary);
+    font-weight: 700;
+  }
+  .arch-kpi {
+    margin-top: auto;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--foreground);
+  }
+  .arch-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted-foreground);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  /* Cost ceiling bars */
+  .cost-bars {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 16px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .bar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .bar-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+  }
+  .bar-meta strong { color: var(--foreground); font-weight: 600; }
+  .bar-meta span { font-family: var(--font-mono); color: var(--muted-foreground); font-size: 11px; }
+  .bar-track {
+    width: 100%;
+    height: 7px;
+    background: var(--secondary);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+  }
+
+  /* Quadrant Chart */
+  .chart-wrap {
+    width: 100%;
+    height: 290px;
+    position: relative;
+  }
+  .legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--muted-foreground);
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* Filter tabs */
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .tab-btn {
+    background: var(--secondary);
+    color: var(--muted-foreground);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 4px 10px;
+    font-size: 11.5px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all 0.15s ease;
+  }
+  .tab-btn:hover {
+    color: var(--foreground);
+    border-color: var(--ring);
+  }
+  .tab-btn.active {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--primary);
+    font-weight: 600;
+  }
+
+  /* Prototype cards */
+  .proto-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .proto-card {
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 11px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .proto-card:hover, .proto-card.selected {
+    border-color: var(--primary);
+  }
+  .proto-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+  }
+  .proto-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+  .tier-pill {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    padding: 1px 6px;
+    border-radius: 99px;
+    white-space: nowrap;
+    border: 1px solid var(--border);
+    color: var(--foreground);
+    background: var(--card);
+  }
+  .tier-green { border-color: var(--success); color: var(--success); }
+  .tier-yellow { border-color: var(--warning); color: var(--warning); }
+  .tier-fixed { border-color: var(--info); color: var(--info); }
+
+  .proto-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--muted-foreground);
+  }
+  .tag {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  .proto-flow {
+    font-size: 11px;
+    line-height: 1.42;
+    color: var(--muted-foreground);
+  }
+  .proto-flow b { color: var(--foreground); font-weight: 600; }
+  .proto-detail {
+    display: none;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+    font-size: 11px;
+    color: var(--muted-foreground);
+  }
+  .proto-card.selected .proto-detail { display: block; }
+  .proto-detail div { margin-bottom: 3px; }
+  .proto-detail strong { color: var(--foreground); }
+
+  @media (max-width: 560px) {
+    .arch-grid { grid-template-columns: 1fr; }
+    .arch-arrow { transform: rotate(90deg); height: 14px; }
+    .cost-bars { grid-template-columns: 1fr; }
+    .proto-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Panel 1: Dual-Layer Sandwich Architecture & Cost Ceilings -->
+  <div class="section-box">
+    <div class="section-head">
+      <div class="section-title">双速三明治架构（L1 兴趣卡 → 4大门禁 → L2 落地页）与爆量成本红线</div>
+      <div class="section-sub">Neon × Carbon × GPT 三轮合议基线（10万曝光基准）</div>
+    </div>
+    <div class="arch-grid">
+      <div class="arch-col l1">
+        <div class="arch-badge">L1 · FEED CARD (100% 曝光)</div>
+        <div class="arch-name">离线生成闭环 · 极速防划走</div>
+        <ul class="arch-list">
+          <li>Pure-Tap 单击 + 静音成立</li>
+          <li>150ms 物理 Juice + 850ms 首果</li>
+          <li>离线强模型生成并审校的组合池</li>
+          <li>100% 轻量公域闭环（不强逼跳页）</li>
+        </ul>
+        <div class="arch-kpi">响应 ≤150–300ms ｜ 卡内算力 ≈ ¥0</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-col gate">
+        <div class="arch-badge">PORTAL · 4 大物理/资产门禁</div>
+        <div class="arch-name">自然二跳 + 三字段状态续接</div>
+        <ul class="arch-list">
+          <li>门禁 1：重输入（传图/文档/长文本）</li>
+          <li>门禁 2：重算力（>3s 多模态/深推理）</li>
+          <li>门禁 3：私有资产外发（大字报/清单）</li>
+          <li>门禁 4：交易/团购/组件核销</li>
+        </ul>
+        <div class="arch-kpi">自然二跳 ~8–15% ｜ 算力洪峰降 10×</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-col l2">
+        <div class="arch-badge">L2 · LANDING PAGE (高意向承接)</div>
+        <div class="arch-name">真 AI 硬核推理 · 资产与商业</div>
+        <ul class="arch-list">
+          <li>承接 seed + 战果 + 悬念直入第2幕</li>
+          <li>释放实时多模态/多约束不可替代 AI</li>
+          <li>5道阻断安全流水线 + GB 45438标识</li>
+          <li>无真人依赖复访 + 零交易实证/变现</li>
+        </ul>
+        <div class="arch-kpi">文本 ≤2s / 生图 ≤8s ｜ 熔断切样板</div>
+      </div>
+    </div>
+
+    <div class="cost-bars">
+      <div class="bar-item">
+        <div class="bar-meta"><strong>① 纯内容 / 冲传播奖</strong><span>CPQC ≤ ¥0.005 ｜ 等待 ≤2.5s</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width: 12%; background: var(--chart-1);"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-meta"><strong>② 电商 CPS / 本地生活导购</strong><span>CPQC ≤ ¥0.020 ｜ 等待 ≤6–8s</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width: 34%; background: var(--chart-2);"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-meta"><strong>③ C端增值试用层（合规主体后）</strong><span>CPQC ≤ ¥0.030 ｜ 等待 ≤5s</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width: 48%; background: var(--chart-3);"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-meta"><strong>④ 品牌定制互动卡（B端买断）</strong><span>CPQC ≤ ¥0.150 ｜ 等待 ≤5s</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width: 92%; background: var(--chart-4);"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 2: 2D Strategic Quadrant Scatter Chart -->
+  <div class="section-box">
+    <div class="section-head">
+      <div>
+        <div class="section-title">12 大不局限原型 · 「公域起量顺滑度 × 商业与产品纵深」全景象限</div>
+        <div class="section-sub">点击任意气泡或下方卡片查看卡→页闭环、合规护栏与变现路径</div>
+      </div>
+      <div class="legend-row">
+        <span class="legend-item"><span class="dot" style="background: var(--success);"></span>绿档最快首发</span>
+        <span class="legend-item"><span class="dot" style="background: var(--warning);"></span>黄档卡轻页重</span>
+        <span class="legend-item"><span class="dot" style="background: var(--info);"></span>红队合规重构</span>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <svg id="quadChart" viewBox="0 0 690 290" width="100%" height="290" role="img" aria-label="12大原型战略象限图"></svg>
+    </div>
+  </div>
+
+  <!-- Panel 3: Interactive 12-Prototype Explorer -->
+  <div class="section-box">
+    <div class="section-head">
+      <div class="section-title">不局限灵感库筛选器（按目标奖项、工程门槛与商业潜力自由选型）</div>
+      <div class="section-sub" id="countLabel">当前显示 12 / 12 个原型（点击卡片展开护栏）</div>
+    </div>
+    <div class="tabs" id="filterTabs">
+      <button class="tab-btn active" data-filter="all">全部 (12)</button>
+      <button class="tab-btn" data-filter="viral">冲 6 个传播奖</button>
+      <button class="tab-btn" data-filter="special">冲 15 个万元专项</button>
+      <button class="tab-btn" data-filter="grand">冲 5 万全场 / 孵化</button>
+      <button class="tab-btn" data-filter="green">零代码 / 绿档首发</button>
+      <button class="tab-btn" data-filter="biz">T0 高商业变现</button>
+    </div>
+    <div class="proto-grid" id="protoGrid"></div>
+  </div>
+</div>
+
+<script>
+const PROTOS = [
+  {
+    id: 1, short: "赛博包青天", name: "① 赛博包青天·30秒奇葩断案局",
+    track: "全民娱乐 × 阵营辩论", tier: "green", tierLabel: "绿档首发",
+    x: 92, y: 45, r: 9, lx: -13, ly: 4, la: "end",
+    prizes: ["viral"], prizeText: "传播奖头号种子",
+    l1: "红蓝大字争议气泡 + 单击拍惊堂木抓漏洞，10s 看全网反差判比",
+    l2: "专属编号虚构判决书 + 反方辩词 + 自填虚构案由多角对质",
+    guard: "禁用真实法院名/公章/真人指控；避开极端群体对立；音频点击播放防串音。",
+    biz: "流量主分成 / 短剧与游戏宣发软冠名"
+  },
+  {
+    id: 2, short: "反画饼嘴替", name: "② 反画饼嘴替·职场保命模拟器",
+    track: "打工人 × 双血条微模拟", tier: "green", tierLabel: "绿档首发",
+    x: 89, y: 71, r: 10, lx: -14, ly: 4, la: "end",
+    prizes: ["viral", "grand"], prizeText: "传播 + 5万全场双修",
+    l1: "仿真工作消息 + 【年终奖】vs【乳腺】双血条，单击 2 回合极限拉扯",
+    l2: "贴真实棘手文本（脱敏），按职级底线生成 3 档可直接发送回复",
+    guard: "聚焦催进度/争优先级/清职责中性场景，不怂恿极端对抗，首发拒收他人原聊天截图。",
+    biz: "招聘品牌冠名 / 职场与求职提效包"
+  },
+  {
+    id: 3, short: "空间抢救局", name: "③ 15秒空间抢救局",
+    track: "泛家居 × 视觉瞬切爆改", tier: "yellow", tierLabel: "卡轻页重",
+    x: 80, y: 90, r: 11, lx: -15, ly: 3, la: "end",
+    prizes: ["grand", "special", "biz"], prizeText: "5万全场 / 官方孵化",
+    l1: "老破小图悬浮痛点锚点，单击 clip-path 局部瞬切豪宅并跳总花费",
+    l2: "透传风格预算，本地裁剪上传局部照异步重绘 + 真实可买平替清单",
+    guard: "卡内用授权样板；传图本地裁切遮敏禁人脸门牌；生图 >8s 回退实拍参考防货不对板。",
+    biz: "T0 零违和抖音商城 CPS 导购 + 家居赞助"
+  },
+  {
+    id: 4, short: "脑回路错位", name: "④ 脑回路错位解剖室",
+    track: "关系破冰 × 异步对账", tier: "yellow", tierLabel: "卡轻页重",
+    x: 62, y: 55, r: 8, lx: 12, ly: 4, la: "start",
+    prizes: ["viral"], prizeText: "传播奖（私域裂变）",
+    l1: "单人 3 步单击潜台词题，10s 立刻出全网 82% 同类盲区报告（单人先爽）",
+    l2: "经站内获准分享发一次性邀请号给密友盲答，双方同意后解锁差异摘要",
+    guard: "严禁强制分享解锁；取消心理诊断评分；严格定位真人破冰，零触碰虚拟伴侣红线。",
+    biz: "本地双人约会团购 / 流量主"
+  },
+  {
+    id: 5, short: "大脑清理舱", name: "⑤ 30秒大脑清理舱（全天候）",
+    track: "全天候微解压 × 美学", tier: "green", tierLabel: "绿档首发",
+    x: 56, y: 45, r: 8, lx: 12, ly: 4, la: "start",
+    prizes: ["special"], prizeText: "万元专项（美学/人文）",
+    l1: "去窄深夜时段，单击漂浮焦虑玻璃球碎裂被吸入引力井 + 呼吸光环",
+    l2: "读取本地时钟动态切午休充能/深夜助眠皮肤 + 3天情绪回旋镖账本",
+    guard: "彻底禁长按拖拽防撞宿主弹窗；定性为一次性节奏解压玩具，不越界心理诊疗。",
+    biz: "助眠/香氛/咖啡消费品软植入"
+  },
+  {
+    id: 6, short: "爸妈防坑官", name: "⑥ 爸妈防坑翻译官（权威库版）",
+    track: "跨代际公益 × 顺毛转译", tier: "fixed", tierLabel: "合规重构",
+    x: 66, y: 68, r: 9, lx: 13, ly: 4, la: "start",
+    prizes: ["special"], prizeText: "万元专项（社会价值）",
+    l1: "仿真家族群伪科学谣言/防骗话术，单击即切换不伤自尊的顺毛口径",
+    l2: "基于权威公开辟谣白名单生成带出处大字报 + 温和方言/长辈语音卡",
+    guard: "彻底删除体检报告诊疗！缺权威信源弃答并禁导出；显隐式标注 AI 合成标识。",
+    biz: "正规科普/反诈/银发服务公益与品牌冠名"
+  },
+  {
+    id: 7, short: "万物降维机", name: "⑦ 30秒万物降维机（替你干活）",
+    track: "泛知识效率 × 拍键翻牌", tier: "yellow", tierLabel: "卡轻页重",
+    x: 84, y: 79, r: 9, lx: 13, ly: 4, la: "start",
+    prizes: ["special", "grand"], prizeText: "效率专项 / 冲全场",
+    l1: "热搜硬核题 + 单击机场翻牌键【5岁娃/甄嬛传/电竞】0.15s 秒懂",
+    l2: "抛弃“考用户”费曼抽查，粘贴天书文档一键降维成晨会可直接念的 3 句人话",
+    guard: "限定提取术语/改写/提问清单并标原文出处；严禁输出个股买卖或个案法律指令。",
+    biz: "图书知识带货 / 办公与备考效率包"
+  },
+  {
+    id: 8, short: "412太空站", name: "⑧ 第412号太空站·纪元投票",
+    track: "科幻脑洞 × 全服共创", tier: "fixed", tierLabel: "纪元重构",
+    x: 50, y: 60, r: 8, lx: 12, ly: 4, la: "start",
+    prizes: ["special", "viral"], prizeText: "硬核创新专项",
+    l1: "警报终端显示上一纪元全服玩家闯祸残局，单击在 3 个生死指令中投票",
+    l2: "浏览《编年史》与全服分桶快照；独立沙盒开 4–8 人好友私密平行副本",
+    guard: "严禁自由文本直改全局！每 30 分钟离线 AI 导演推演 + 机审后广播，防 UGC 污染与写锁。",
+    biz: "科幻游戏、影视剧宣发联名"
+  },
+  {
+    id: 9, short: "逃离半径3km", name: "⑨ 今日逃离半径·3公里微探险",
+    track: "本地生活 × 现实轻剧本", tier: "green", tierLabel: "绿→黄渐进",
+    x: 66, y: 86, r: 10, lx: -14, ly: 4, la: "end",
+    prizes: ["grand", "biz"], prizeText: "5万全场 / 本地孵化",
+    l1: "单击拨动罗盘选【电量+预算】，10s 吐出 2 小时城市观察微剧本卡",
+    l2: "手选城市/商圈（不强弹 LBS），结合公开数据源生成白天路线与探险票根",
+    guard: "禁首屏硬弹定位；避开夜间偏僻路线；个人 Demo 阶段只测方案点击不收手机号。",
+    biz: "T0 级本地生活团购 CPS + 文旅商圈合作"
+  },
+  {
+    id: 10, short: "红黑排雷买手", name: "⑩ 红黑排雷买手·成分参数台",
+    track: "消费决策 × 理工单兵黑马", tier: "yellow", tierLabel: "商业黑马",
+    x: 89, y: 94, r: 11, lx: -16, ly: -12, la: "end",
+    prizes: ["grand", "biz"], prizeText: "官方孵化 / 5万全场",
+    l1: "聚焦防晒/数码/小家电，单击 3 枚“最讨厌雷点”砸碎智商税参数",
+    l2: "贴参数或配料表（只读查权威库），3s 标红刺客项并输出选购黄金参数",
+    guard: "严守广告法与反商业诋毁：不点名拉踩具体品牌，只客观拆解成分参数并附来源日期。",
+    biz: "天花板级美妆/3C高佣 CPS + 品牌实测卡"
+  },
+  {
+    id: 11, short: "主理人配方机", name: "⑪ 主理人私房配方机·达人分身",
+    track: "达人生态 × 低成本黑马", tier: "yellow", tierLabel: "生态黑马",
+    x: 74, y: 81, r: 10, lx: -14, ly: 14, la: "end",
+    prizes: ["special", "grand", "biz"], prizeText: "平台孵化 / 万元专项",
+    l1: "单击 3 枚技能键（废片抢救/便利店3食材混搭），0.2s 出专属编号配方卡",
+    l2: "传自家材料/裁剪图得博主风格诊断清单，可配置母版复用给万名垂类达人",
+    guard: "涉及真实达人肖像/声线/素材须分别留存授权与单独同意；纯食材/思路配方近 0 风险。",
+    biz: "B2B2C 达人工具分身 + 品牌联名体验卡"
+  },
+  {
+    id: 12, short: "实体店钩子机", name: "⑫ 黄金前3秒·实体店钩子克隆",
+    track: "中小商家 × 冲金奖黑马", tier: "green", tierLabel: "B端黑马",
+    x: 64, y: 96, r: 11, lx: 15, ly: 4, la: "start",
+    prizes: ["grand", "special", "biz"], prizeText: "5万全场 / 生产力孵化",
+    l1: "单击对比【500播放平淡开头】vs【高完播反差钩子】，10s 秒懂结构",
+    l2: "输入小店行业与招牌特惠，提炼高完播结构生成原创 15s 大字提词脚本",
+    guard: "严禁承诺“必上热门/保播放量/保涨粉”；不抄原稿只提结构，案例附样本周期。",
+    biz: "高 ARPU 商家 SaaS / 本地推合作（3–5 家小店 LOI 极具杀伤力）"
+  }
+];
+
+let activeFilter = "all";
+let selectedId = 10;
+
+function matchesFilter(p, f) {
+  if (f === "all") return true;
+  if (f === "green") return p.tier === "green";
+  return p.prizes.includes(f);
+}
+
+function tierColor(tier) {
+  if (tier === "green") return "var(--success)";
+  if (tier === "yellow") return "var(--warning)";
+  return "var(--info)";
+}
+
+function renderChart() {
+  const svg = document.getElementById("quadChart");
+  const W = 690, H = 290;
+  const padL = 44, padR = 26, padT = 26, padB = 34;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const sx = v => padL + ((v - 44) / 56) * plotW;
+  const sy = v => padT + ((108 - v) / 76) * plotH;
+  const midX = sx(72), midY = sy(72);
+
+  let html = "";
+  html += `<rect x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="none" stroke="var(--border)" stroke-width="1" rx="6" />`;
+  html += `<line x1="${midX}" y1="${padT}" x2="${midX}" y2="${padT + plotH}" stroke="var(--border)" stroke-dasharray="4 4" />`;
+  html += `<line x1="${padL}" y1="${midY}" x2="${padL + plotW}" y2="${midY}" stroke="var(--border)" stroke-dasharray="4 4" />`;
+
+  html += `<text x="${padL + 8}" y="${padT - 8}" fill="var(--muted-foreground)" font-size="10.5">高纵深 / 垂类蓄力区（专项·B端孵化）</text>`;
+  html += `<text x="${padL + plotW - 4}" y="${padT - 8}" text-anchor="end" fill="var(--primary)" font-size="10.5" font-weight="600">★ 5万全场大奖 &amp; 商业孵化黄金象限</text>`;
+  html += `<text x="${padL + 8}" y="${padT + plotH - 7}" fill="var(--muted-foreground)" font-size="10" opacity="0.8">创新与交互美学探索区</text>`;
+  html += `<text x="${padL + plotW - 8}" y="${padT + plotH - 7}" text-anchor="end" fill="var(--muted-foreground)" font-size="10" opacity="0.8">快起量 / 6个传播奖爆发区</text>`;
+
+  html += `<text x="${padL + plotW / 2}" y="${H - 8}" text-anchor="middle" fill="var(--muted-foreground)" font-size="11">公域冷启动与首屏起量顺滑度 →</text>`;
+  html += `<text x="14" y="${padT + plotH / 2}" text-anchor="middle" fill="var(--muted-foreground)" font-size="11" transform="rotate(-90 14 ${padT + plotH / 2})">产品纵深与商业天花板 →</text>`;
+
+  PROTOS.forEach(p => {
+    const visible = matchesFilter(p, activeFilter);
+    const cx = sx(p.x), cy = sy(p.y);
+    const isSel = p.id === selectedId;
+    const opacity = visible ? (isSel ? 1 : 0.9) : 0.16;
+    const col = tierColor(p.tier);
+
+    html += `<g style="cursor:pointer;opacity:${opacity}" onclick="selectProto(${p.id})">`;
+    if (isSel) {
+      html += `<circle cx="${cx}" cy="${cy}" r="${p.r + 5}" fill="none" stroke="var(--primary)" stroke-width="2" />`;
+    }
+    html += `<circle cx="${cx}" cy="${cy}" r="${p.r}" fill="${col}" fill-opacity="0.22" stroke="${col}" stroke-width="2" />`;
+    html += `<text x="${cx}" y="${cy + 3.5}" text-anchor="middle" fill="var(--foreground)" font-size="9.5" font-weight="700" font-family="var(--font-mono)">${p.id}</text>`;
+    html += `<text x="${cx + p.lx}" y="${cy + p.ly}" text-anchor="${p.la}" fill="var(--foreground)" font-size="10.5" font-weight="${isSel ? '700' : '500'}">${p.short}</text>`;
+    html += `</g>`;
+  });
+
+  svg.innerHTML = html;
+}
+
+function renderCards() {
+  const grid = document.getElementById("protoGrid");
+  const filtered = PROTOS.filter(p => matchesFilter(p, activeFilter));
+  document.getElementById("countLabel").textContent = `当前显示 ${filtered.length} / ${PROTOS.length} 个原型（点击卡片展开合规与商业路径）`;
+
+  grid.innerHTML = filtered.map(p => {
+    const tierCls = p.tier === "green" ? "tier-green" : (p.tier === "yellow" ? "tier-yellow" : "tier-fixed");
+    const isSel = p.id === selectedId;
+    return `
+      <div class="proto-card ${isSel ? "selected" : ""}" onclick="selectProto(${p.id})">
+        <div class="proto-top">
+          <div class="proto-title">${p.name}</div>
+          <span class="tier-pill ${tierCls}">${p.tierLabel}</span>
+        </div>
+        <div class="proto-meta">
+          <span class="tag">${p.track}</span>
+          <span class="tag">${p.prizeText}</span>
+        </div>
+        <div class="proto-flow">
+          <div><b>L1 卡内：</b>${p.l1}</div>
+          <div><b>L2 页内：</b>${p.l2}</div>
+        </div>
+        <div class="proto-detail">
+          <div><strong>🛡 红队合规护栏：</strong>${p.guard}</div>
+          <div><strong>💰 变现与孵化：</strong>${p.biz}</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+window.selectProto = function(id) {
+  selectedId = (selectedId === id) ? null : id;
+  renderChart();
+  renderCards();
+};
+
+document.getElementById("filterTabs").addEventListener("click", (e) => {
+  const btn = e.target.closest(".tab-btn");
+  if (!btn) return;
+  activeFilter = btn.dataset.filter;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b === btn));
+  renderChart();
+  renderCards();
+});
+
+renderChart();
+renderCards();
+</script>
+</body>
+</html>

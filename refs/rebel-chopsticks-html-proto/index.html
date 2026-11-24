@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>筷子有反骨</title>
+<style>
+  :root {
+    --bg-deep: #180E0C;
+    --card-bg: #261613;
+    --wood-light: #FFF5E1;
+    --wood-mid: #F5DEC0;
+    --wood-border: #6E3B2B;
+    --ink: #3B1D14;
+    --red: #E03C28;
+    --gold: #F59E0B;
+    --jade: #10B981;
+    --blue: #2563EB;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    width: 100%;
+    min-height: 100%;
+    background: radial-gradient(circle at 50% 18%, #351A14 0%, var(--bg-deep) 72%);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--wood-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    position: relative;
+    width: min(100%, 388px);
+    background: linear-gradient(180deg, #2E1915 0%, #1F110E 100%);
+    border: 2px solid #4E2A20;
+    border-radius: 28px;
+    padding: 12px 12px 10px;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 236, 200, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    overflow: hidden;
+  }
+
+  .tap-btn {
+    border: none;
+    outline: none;
+    cursor: pointer;
+    touch-action: manipulation;
+    font-family: inherit;
+    transition: transform 80ms ease, filter 80ms ease;
+  }
+  .tap-btn.pressing {
+    transform: scale(0.94);
+    filter: brightness(0.93);
+  }
+
+  /* Row 1: Mode Switcher + Sound/Streak */
+  .top-hud {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .mode-tabs {
+    display: flex;
+    gap: 4px;
+    background: #160B09;
+    padding: 3px;
+    border-radius: 999px;
+    border: 1px solid #45241B;
+    flex: 1;
+  }
+
+  .mode-tab {
+    flex: 1;
+    background: transparent;
+    color: #C9A690;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 6px 2px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    white-space: nowrap;
+  }
+  .mode-tab.active {
+    background: linear-gradient(180deg, #FFEAC2 0%, #F4C884 100%);
+    color: var(--ink);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  }
+
+  .hud-right {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+
+  .streak-pill {
+    background: rgba(245, 158, 11, 0.16);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    color: #FDE68A;
+    font-size: 11.5px;
+    font-weight: 900;
+    padding: 5px 8px;
+    border-radius: 999px;
+  }
+
+  .icon-pill {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #160B09;
+    border: 1px solid #4E2A20;
+    color: var(--wood-light);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-pill.unmuted {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #34D399;
+  }
+
+  /* Row 2: Fixed-height Context Strip */
+  .sub-bar {
+    min-height: 38px;
+    background: rgba(22, 11, 9, 0.68);
+    border: 1px solid #3D2018;
+    border-radius: 14px;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .day-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .day-dots::-webkit-scrollbar { display: none; }
+
+  .day-dot {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: #271410;
+    border: 1.5px solid #4B281E;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .day-dot.active {
+    background: #FFF1D0;
+    border-color: #F59E0B;
+    transform: translateY(-1px);
+  }
+  .day-dot.cleared::after {
+    content: '★';
+    position: absolute;
+    right: -2px;
+    bottom: -3px;
+    font-size: 9px;
+    color: #FACC15;
+    text-shadow: 0 1px 2px #000;
+  }
+
+  .status-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    font-size: 12.5px;
+    font-weight: 900;
+  }
+  .target-badge {
+    background: #3A1E17;
+    border: 1px solid #6E3B2B;
+    padding: 3px 8px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    color: #FDE68A;
+  }
+  .sticks-left {
+    letter-spacing: -1px;
+    font-size: 14px;
+  }
+
+  .filter-chips {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .food-filter {
+    flex: 1;
+    height: 28px;
+    border-radius: 8px;
+    background: #FFF3D6;
+    border: 1.5px solid #B47B4E;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .food-filter.excluded {
+    background: #241310;
+    border-color: #4B281E;
+    opacity: 0.48;
+  }
+  .food-filter.excluded::after {
+    content: '✕';
+    position: absolute;
+    color: #EF4444;
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .duel-strip, .prank-strip {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12.5px;
+    font-weight: 900;
+    padding: 0 4px;
+  }
+  .prank-tag {
+    background: linear-gradient(90deg, #E03C28, #F97316);
+    color: #FFF;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+  }
+
+  /* Centerpiece Arena */
+  .arena-stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-height: 348px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #arena-canvas {
+    width: 100%;
+    height: 100%;
+    max-width: 348px;
+    max-height: 348px;
+    display: block;
+    touch-action: none;
+    cursor: pointer;
+  }
+
+  /* Result Overlay Stamp Card (Zero long text!) */
+  .result-pop {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 10px;
+    background: rgba(255, 248, 231, 0.97);
+    color: var(--ink);
+    border: 2.5px solid var(--wood-border);
+    border-radius: 18px;
+    padding: 10px 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    animation: pop-up 190ms cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 12;
+  }
+  .result-pop.visible { display: flex; }
+
+  @keyframes pop-up {
+    from { opacity: 0; transform: translateY(14px) scale(0.94); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .res-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .res-title {
+    font-size: 16px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .res-sub {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #9A3412;
+    background: #FFEDD5;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .fusion-toast {
+    display: none;
+    background: linear-gradient(90deg, #FEF08A, #FDE047);
+    border: 1.5px solid #CA8A04;
+    border-radius: 10px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-weight: 900;
+    color: #713F12;
+    text-align: center;
+  }
+  .fusion-toast.visible { display: block; }
+
+  .res-actions {
+    display: flex;
+    gap: 7px;
+  }
+  .btn-main {
+    flex: 1.3;
+    background: linear-gradient(180deg, #EF4444 0%, #DC2626 100%);
+    color: #FFF;
+    border: 2px solid #7F1D1D;
+    box-shadow: 0 3px 0 #7F1D1D;
+    border-radius: 12px;
+    padding: 9px 8px;
+    font-size: 13px;
+    font-weight: 900;
+    text-align: center;
+  }
+  .btn-sec {
+    flex: 1;
+    background: #FFF;
+    color: var(--ink);
+    border: 2px solid var(--wood-border);
+    box-shadow: 0 3px 0 #D6B899;
+    border-radius: 12px;
+    padding: 9px 8px;
+    font-size: 12.5px;
+    font-weight: 900;
+    text-align: center;
+  }
+
+  /* Living Bento Strip */
+  .bento-card {
+    background: #1B0E0B;
+    border: 1px solid #43231A;
+    border-radius: 16px;
+    padding: 7px 9px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .bento-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #E7C9AA;
+  }
+
+  .recipe-strip {
+    display: flex;
+    gap: 5px;
+    font-size: 10.5px;
+  }
+  .recipe-pill {
+    background: #2B1712;
+    border: 1px solid #532D22;
+    padding: 1px 6px;
+    border-radius: 999px;
+    color: #D6B497;
+  }
+  .recipe-pill.unlocked {
+    background: rgba(250, 204, 21, 0.18);
+    border-color: #EAB308;
+    color: #FEF08A;
+  }
+
+  #bento-canvas {
+    width: 100%;
+    height: 68px;
+    display: block;
+    border-radius: 12px;
+  }
+
+  /* Zero-Keyboard 4-Slot Prank Maker Sheet */
+  .sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(12, 6, 5, 0.76);
+    z-index: 25;
+    display: none;
+    align-items: flex-end;
+  }
+  .sheet-backdrop.visible { display: flex; }
+
+  .prank-sheet {
+    width: 100%;
+    background: var(--wood-light);
+    color: var(--ink);
+    border-top: 3px solid var(--wood-border);
+    border-radius: 24px 24px 0 0;
+    padding: 14px 13px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: slide-up 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes slide-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14.5px;
+    font-weight: 900;
+  }
+  .close-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #EED7B5;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .slot-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .slot-label {
+    font-size: 11px;
+    font-weight: 900;
+    color: #7C442F;
+  }
+
+  .chip-grid-6 {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 5px;
+  }
+  .chip-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .pick-chip {
+    background: #FFF;
+    border: 2px solid #D6B899;
+    border-radius: 11px;
+    padding: 6px 2px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .pick-chip .ico { font-size: 17px; line-height: 1.1; }
+  .pick-chip.selected {
+    background: #FEF3C7;
+    border-color: var(--red);
+    box-shadow: 0 2px 0 var(--red);
+  }
+
+  .inline-split {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 8px;
+  }
+
+  .share-done-bar {
+    display: none;
+    background: #ECFDF5;
+    border: 1.5px solid #10B981;
+    border-radius: 12px;
+    padding: 8px 10px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #065F46;
+  }
+  .share-done-bar.visible { display: flex; }
+
+  .friend-sim-btn {
+    background: #059669;
+    color: #FFF;
+    padding: 5px 9px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .mini-toast {
+    position: absolute;
+    top: 54px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(24, 14, 12, 0.92);
+    border: 1px solid #F59E0B;
+    color: #FEF3C7;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 5px 12px;
+    border-radius: 999px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 150ms ease;
+    z-index: 40;
+    white-space: nowrap;
+  }
+  .mini-toast.show { opacity: 1; }
+  .card-title { display: none; }
+  .bento-reset, .mix-btn {
+    border: 1px solid #775039;
+    border-radius: 999px;
+    font-weight: 800;
+    padding: 4px 9px;
+  }
+  .bento-reset { background: #301a13; color: #f5dec0; min-width: 28px; }
+  .mix-btn { background: #ffe1a1; color: #5b291d; margin-left: auto; }
+  .sheet-head { gap: 6px; }
+  .ai-mark { align-self: flex-end; font-size: 10px; color: rgba(255,245,225,.65); }
+  html[data-dy-surface="page"] body {
+    padding: max(8px, var(--dy-safe-top, 0px)) max(8px, var(--dy-safe-right, 0px))
+             max(8px, var(--dy-safe-bottom, 0px)) max(8px, var(--dy-safe-left, 0px));
+  }
+  html[data-dy-surface="card"], html[data-dy-surface="card"] body {
+    height: 100%;
+    overflow: hidden;
+  }
+  html[data-dy-surface="card"] { padding: 0; }
+  html[data-dy-surface="card"] body {
+    padding: var(--dy-safe-top, 56px) var(--dy-safe-right, 76px) var(--dy-safe-bottom, 116px) var(--dy-safe-left, 16px);
+  }
+  [data-dy-surface="card"] .app-shell { max-height: 100%; gap: 4px; padding: 6px; }
+  [data-dy-surface="card"] .card-title { display: inline; font-weight: 900; }
+  [data-dy-surface="card"] :is(.mode-tabs, .day-dots, .recipe-strip) { display: none; }
+  [data-dy-surface="card"] .sub-bar { min-height: 26px; }
+  [data-dy-surface="card"] .status-right { width: 100%; justify-content: space-between; }
+  [data-dy-surface="card"] .arena-stage { min-height: 0; }
+  [data-dy-surface="card"] #arena-canvas { width: auto; max-width: 100%; aspect-ratio: 1; touch-action: pan-y; }
+  [data-dy-surface="card"] #bento-canvas { height: 30px; }
+  [data-dy-surface="card"] .result-pop { left: 0; right: 0; bottom: 0; padding: 6px; gap: 4px; }
+  [data-dy-surface="card"] .res-actions button { flex: 1 1 auto; padding: 6px 3px; }
+  @media (max-height: 540px) {
+    [data-dy-surface="card"] #bento-canvas { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <!-- Top HUD -->
+    <div class="top-hud">
+      <span class="card-title">🌶️反骨锅</span>
+      <div class="mode-tabs">
+        <button class="tap-btn mode-tab active" id="tab-daily" type="button">🌶️反骨锅</button>
+        <button class="tap-btn mode-tab" id="tab-fair" type="button">🎲公平夹</button>
+        <button class="tap-btn mode-tab" id="tab-duel" type="button">⚔️双人抢</button>
+        <button class="tap-btn mode-tab" id="tab-prank" type="button">🎭设局坑</button>
+      </div>
+      <div class="hud-right">
+        <span class="streak-pill" id="streak-pill">🔥1</span>
+        <button class="tap-btn icon-pill" id="btn-sound" type="button" aria-label="音效开关">🔇</button>
+      </div>
+    </div>
+
+    <!-- Dynamic Context Sub-Bar -->
+    <div class="sub-bar" id="sub-bar">
+      <!-- Daily Bar -->
+      <div id="bar-daily" style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:6px;">
+        <div class="day-dots" id="day-dots"></div>
+        <div class="status-right">
+          <span class="target-badge" id="daily-target-badge">🎯🥟</span>
+          <span class="sticks-left" id="daily-sticks">🥢🥢🥢</span>
+        </div>
+      </div>
+
+      <!-- Fair Meal Picker Bar -->
+      <div class="filter-chips" id="bar-fair" style="display:none;"></div>
+
+      <!-- 2P Duel Bar -->
+      <div class="duel-strip" id="bar-duel" style="display:none;">
+        <span style="color:#93C5FD;" id="duel-p2-score">🔵 蓝筷 0</span>
+        <span style="color:#FDE68A;font-size:11px;">⚡先抢3颗胜 · 避开🌶️</span>
+        <span style="color:#FCA5A5;" id="duel-p1-score">0 红筷 🔴</span>
+      </div>
+
+      <!-- Friend Prank Bar -->
+      <div class="prank-strip" id="bar-prank" style="display:none;">
+        <span class="prank-tag" id="prank-volley-tag">🌶️ 整蛊局 · 🏓第1回</span>
+        <div class="status-right">
+          <span class="target-badge" id="prank-target-badge">🎯🥟</span>
+          <span class="sticks-left" id="prank-sticks">🥢🥢🥢</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 60fps Soft-Body Hotpot / Plate Canvas -->
+    <div class="arena-stage">
+      <canvas id="arena-canvas" width="320" height="320"></canvas>
+
+      <div class="result-pop" id="result-pop">
+        <div class="res-head">
+          <div class="res-title" id="res-title">🥟 拿捏入碗!</div>
+          <span class="res-sub" id="res-sub">2筷拿下</span>
+        </div>
+        <div class="fusion-toast" id="fusion-toast">✨ 解锁合体神菜：金甲护蛋面！</div>
+        <div class="res-actions">
+          <button class="tap-btn btn-main" id="btn-res-primary" type="button">▶ 下一锅</button>
+          <button class="tap-btn btn-sec" id="btn-res-secondary" type="button">🎭 设局坑人</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Living Bento Collection & Auto-Fusion Strip -->
+    <div class="bento-card">
+      <div class="bento-head">
+        <span id="bento-count">🍱 活体便当 0/11</span>
+        <div class="recipe-strip" id="recipe-strip">
+          <span class="recipe-pill" id="rec-golden_egg_noodle">🍜+🥚=✨</span>
+          <span class="recipe-pill" id="rec-fire_wings">🍗+🌶️=🔥</span>
+          <span class="recipe-pill" id="rec-jade_dumpling">🥟+🌿=💎</span>
+        </div>
+        <button type="button" class="tap-btn bento-reset" id="btn-clear" aria-label="清空便当">↺</button>
+      </div>
+      <canvas id="bento-canvas" width="320" height="68"></canvas>
+    </div>
+
+    <!-- Zero-Keyboard 4-Slot Prank Maker Sheet -->
+    <div class="sheet-backdrop" id="prank-backdrop">
+      <div class="prank-sheet">
+        <div class="sheet-head">
+          <span id="sheet-title">🎭 2秒做局坑好友</span>
+          <button type="button" class="tap-btn mix-btn" id="btn-mix">✨ 鬼才配锅</button>
+          <button class="tap-btn close-circle" id="btn-close-sheet" type="button">✕</button>
+        </div>
+
+        <div class="slot-group">
+          <div class="slot-label">① 点选诱饵主菜</div>
+          <div class="chip-grid-6" id="slot-foods"></div>
+        </div>
+
+        <div class="slot-group">
+          <div class="slot-label">② 暗藏反骨机关</div>
+          <div class="chip-grid-6" id="slot-traits"></div>
+        </div>
+
+        <div class="inline-split">
+          <div class="slot-group">
+            <div class="slot-label">③ 翻脸时机</div>
+            <div class="chip-grid-3" id="slot-triggers" style="grid-template-columns:1fr 1fr;"></div>
+          </div>
+          <div class="slot-group">
+            <div class="slot-label">④ 破防印章</div>
+            <div class="chip-grid-3" id="slot-taunts"></div>
+          </div>
+        </div>
+
+        <div class="share-done-bar" id="share-done-bar">
+          <span id="share-done-text">✅ 整蛊局已复制</span>
+          <button class="tap-btn friend-sim-btn" id="btn-sim-friend" type="button">👀 好友视角试玩</button>
+        </div>
+
+        <div class="res-actions">
+          <button class="tap-btn btn-sec" id="btn-try-self" type="button">🥢 先自己试夹</button>
+          <button class="tap-btn btn-main" id="btn-make-share" type="button">📤 生成整蛊局</button>
+        </div>
+      </div>
+    </div>
+
+    <small class="ai-mark">AI 生成互动体验</small>
+    <div class="mini-toast" id="mini-toast" role="status"></div>
+  </div>
+
+<script src="./engine.js"></script>
+<script src="./renderer.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var E = window.ChopsticksEngine;
+  var R = window.ChopsticksRenderer;
+  var SAVE_KEY = 'rebel_chopsticks_save_v1';
+
+  var B = window.DouyinBridge || null;
+  var query = new URLSearchParams(window.location.search);
+  var querySurface = query.get('surface') || query.get('dy_s');
+  var surface = B ? B.detectHostEnv(window).surface :
+    (['page', 'card'].includes(querySurface) ? querySurface : document.documentElement.dataset.dySurface);
+  surface = surface === 'card' ? 'card' : 'page';
+  var urlDecoded = E.decodePrankUrl(window.location.search);
+  if (B) B.applySafeZoneCss(document);
+  if (urlDecoded.isPrank && surface !== 'page') {
+    surface = 'page';
+    if (B) B.applySafeZoneCss(document, surface);
+  }
+  document.documentElement.dataset.dySurface = surface;
+
+  var telemetry = B && B.createTelemetry();
+  function track(event) {
+    if (telemetry) telemetry.track(event, { surface: surface });
+  }
+  track('card_open');
+  var firstTap = true;
+
+  var arenaCanvas = document.getElementById('arena-canvas');
+  var bentoCanvas = document.getElementById('bento-canvas');
+  var renderer = R.createRenderer(arenaCanvas);
+
+  var archiveStore = B ? B.createArchiveStore({
+    key: SAVE_KEY, maxBytes: E.ARCHIVE_MAX_BYTES, serialize: E.serializeSave,
+    parse: E.parseSave, createEmpty: E.createEmptySave
+  }, window) : createLocalArchive();
+
+  function createLocalArchive() {
+    var storage;
+    return {
+      load: function () {
+        try {
+          storage = window.localStorage;
+          return E.parseSave(storage.getItem(SAVE_KEY));
+        } catch (_e) {
+          storage = null;
+          return E.createEmptySave();
+        }
+      },
+      save: function (data) { if (storage) storage.setItem(SAVE_KEY, E.serializeSave(data)); },
+      clear: function () { if (storage) storage.removeItem(SAVE_KEY); }
+    };
+  }
+  var save;
+  try { save = archiveStore.load(); }
+  catch (_e) { save = E.createEmptySave(); }
+  var handoff = null;
+  if (surface === 'page') {
+    handoff = B ? B.decodeHandoff(window.location.search) : {
+      valid: window.location.search.length <= 256 && query.get('dy_v') === '1' && query.get('dy_s') === 'page'
+        && /^day_[1-7]$/.test(query.get('dy_sc')),
+      seedContext: query.get('dy_sc'), earnedArtifact: query.get('dy_ea'), unfinishedHook: query.get('dy_uh')
+    };
+  }
+  var restoredDay = handoff && handoff.valid && /^day_([1-7])$/.exec(handoff.seedContext);
+  var currentDay = restoredDay ? Number(restoredDay[1]) : 1;
+  var excludedFairFoods = [];
+  var activePrankPatch = null;
+  var lastGeneratedShareUrl = '';
+  var toastTimer = null;
+
+  var builderState = {
+    targetFoodId: 'chicken',
+    traitId: 'steal_stick',
+    triggerId: 'on_second_tap',
+    tauntId: 'doge',
+    basePatch: null
+  };
+
+  var friendGame = urlDecoded.isPrank;
+  var world = friendGame
+    ? E.createGame({ mode: 'prank', prankSpec: urlDecoded.patch })
+    : E.createGame({ mode: 'daily', day: currentDay, ghostEnabled: true });
+
+  if (friendGame) {
+    activePrankPatch = urlDecoded.patch;
+  }
+
+  function todayIso() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function awardCatch(round, day) {
+    var out = E.recordCatchInSave(save, {
+      foodId: round.caughtFoodId || round.targetFoodId,
+      dayCleared: round.mode === 'daily' ? day : 0, todayStamp: todayIso(),
+      volley: round.prankSpec ? round.prankSpec.volley : 0
+    });
+    var bonusFood = round.mode === 'daily' && (round.rules.guardian || round.rules.shieldBreaker);
+    if (bonusFood) {
+      var bonus = E.recordCatchInSave(out.save, { foodId: bonusFood, todayStamp: todayIso() });
+      out.save = bonus.save;
+      out.newlyFused = out.newlyFused.concat(bonus.newlyFused);
+    }
+    save = out.save;
+    try { archiveStore.save(save); } catch (_e) { /* Keep rewards in memory when storage is unavailable. */ }
+    return out.newlyFused;
+  }
+
+  function flashToast(text) {
+    var el = document.getElementById('mini-toast');
+    el.textContent = text;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.remove('show');
+    }, 1500);
+  }
+
+  function bindPureTap(el, fn) {
+    var sx = 0, sy = 0, down = false;
+    el.addEventListener('pointerdown', function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      sx = e.clientX;
+      sy = e.clientY;
+      down = true;
+      el.classList.add('pressing');
+    });
+    el.addEventListener('pointermove', function (e) {
+      if (!down) return;
+      if (Math.hypot(e.clientX - sx, e.clientY - sy) > 12) {
+        down = false;
+        el.classList.remove('pressing');
+      }
+    });
+    el.addEventListener('pointercancel', function () {
+      down = false;
+      el.classList.remove('pressing');
+    });
+    el.addEventListener('pointerup', function (e) {
+      el.classList.remove('pressing');
+      if (!down) return;
+      down = false;
+      fn(e);
+    });
+  }
+
+  function renderDayDots() {
+    var wrap = document.getElementById('day-dots');
+    wrap.innerHTML = '';
+    E.DAILY_LEVELS.forEach(function (lv) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      var cleared = (save.dayMask & (1 << (lv.day - 1))) !== 0;
+      btn.className = 'tap-btn day-dot' +
+        (world.mode === 'daily' && currentDay === lv.day ? ' active' : '') +
+        (cleared ? ' cleared' : '');
+      btn.textContent = lv.icon;
+      btn.title = 'Day ' + lv.day;
+      bindPureTap(btn, function () {
+        currentDay = lv.day;
+        startMode('daily');
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function renderFairChips() {
+    var wrap = document.getElementById('bar-fair');
+    wrap.innerHTML = '';
+    Object.keys(E.FOODS).forEach(function (id) {
+      var f = E.FOODS[id];
+      if (!f.isMealOption) return;
+      var entity = world.entities.find(function (it) { return it.foodId === id; });
+      var isEx = entity ? entity.popped : excludedFairFoods.indexOf(id) !== -1;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tap-btn food-filter' + (isEx ? ' excluded' : '');
+      btn.textContent = f.emoji;
+      bindPureTap(btn, function () {
+        if (world.status !== 'playing') {
+          startMode('fair');
+        }
+        var changed = E.toggleFairExclude(world, id);
+        if (changed) {
+          renderer.playSound('bloop');
+          excludedFairFoods = world.entities.filter(function (e) { return e.popped; }).map(function (e) { return e.foodId; });
+          renderFairChips();
+        }
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function sticksString(n) {
+    var count = Math.max(0, Number(n) || 0);
+    return count > 0 ? new Array(count + 1).join('🥢') : '—';
+  }
+
+  function syncHud() {
+    var m = world.mode;
+    document.getElementById('tab-daily').classList.toggle('active', m === 'daily');
+    document.getElementById('tab-fair').classList.toggle('active', m === 'fair');
+    document.getElementById('tab-duel').classList.toggle('active', m === 'duel');
+    document.getElementById('tab-prank').classList.toggle('active', m === 'prank');
+
+    document.getElementById('bar-daily').style.display = m === 'daily' ? 'flex' : 'none';
+    document.getElementById('bar-fair').style.display = m === 'fair' ? 'flex' : 'none';
+    document.getElementById('bar-duel').style.display = m === 'duel' ? 'flex' : 'none';
+    document.getElementById('bar-prank').style.display = m === 'prank' ? 'flex' : 'none';
+
+    document.getElementById('streak-pill').textContent = '🔥' + Math.max(1, save.streak || 1);
+
+    if (m === 'daily') {
+      renderDayDots();
+      var tf = E.FOODS[world.targetFoodId] || E.FOODS.dumpling;
+      document.getElementById('daily-target-badge').textContent = '🎯' + tf.emoji;
+      document.getElementById('daily-sticks').textContent = sticksString(world.attemptsLeft);
+    } else if (m === 'fair') {
+      renderFairChips();
+    } else if (m === 'duel') {
+      document.getElementById('duel-p2-score').textContent = '🔵 蓝筷 ' + world.duelScores.p2;
+      document.getElementById('duel-p1-score').textContent = world.duelScores.p1 + ' 红筷 🔴';
+    } else if (m === 'prank') {
+      var v = (world.prankSpec && world.prankSpec.volley) || 1;
+      document.getElementById('prank-volley-tag').textContent = '🌶️ 整蛊局 · 🏓第' + v + '回';
+      var pf = E.FOODS[world.targetFoodId] || E.FOODS.dumpling;
+      document.getElementById('prank-target-badge').textContent = '🎯' + pf.emoji;
+      document.getElementById('prank-sticks').textContent = sticksString(world.attemptsLeft);
+    }
+
+    var unlocked = E.getUnlockedBentoItems(save);
+    document.getElementById('bento-count').textContent = '🍱 活体便当 ' + unlocked.length + '/11';
+    Object.keys(E.FUSIONS).forEach(function (fid) {
+      var bit = E.FUSIONS[fid].bit;
+      var has = (save.fusionMask & (1 << bit)) !== 0;
+      document.getElementById('rec-' + fid).classList.toggle('unlocked', has);
+    });
+  }
+
+  function showResultOverlay(newlyFused) {
+    var pop = document.getElementById('result-pop');
+    if (world.status === 'playing') {
+      pop.classList.remove('visible');
+      return;
+    }
+
+    var titleEl = document.getElementById('res-title');
+    var subEl = document.getElementById('res-sub');
+    var priBtn = document.getElementById('btn-res-primary');
+    var secBtn = document.getElementById('btn-res-secondary');
+    var fusEl = document.getElementById('fusion-toast');
+
+    if (newlyFused && newlyFused.length > 0) {
+      renderer.playSound('fusion');
+      fusEl.textContent = newlyFused[0].emoji + ' 合体进化：' + newlyFused[0].name + '！';
+      fusEl.classList.add('visible');
+    } else {
+      fusEl.classList.remove('visible');
+    }
+
+    if (world.mode === 'daily') {
+      var food = E.FOODS[world.targetFoodId];
+      if (world.status === 'won') {
+        titleEl.textContent = food.emoji + ' 拿捏入碗！';
+        subEl.textContent = world.tapCount + '筷破局';
+        priBtn.textContent = '▶ 下一锅';
+      } else {
+        titleEl.textContent = '🥢 筷子被耍光了';
+        subEl.textContent = '差一点点';
+        priBtn.textContent = '↻ 再夹一次';
+      }
+      secBtn.style.display = 'block';
+      secBtn.textContent = surface === 'card' ? '🍱 进全锅工坊' : '🎭 拿它坑好友';
+    } else if (world.mode === 'fair') {
+      var picked = E.FOODS[world.caughtFoodId] || E.FOODS.dumpling;
+      titleEl.textContent = picked.emoji + ' 就吃' + picked.name + '！';
+      subEl.textContent = '🎲 天意拍板';
+      priBtn.textContent = '↻ 再夹一筷';
+      secBtn.style.display = 'block';
+      secBtn.textContent = '🌶️ 切反骨锅';
+    } else if (world.mode === 'duel') {
+      titleEl.textContent = world.winner === 'p2' ? '🔵 蓝筷赢麻了！' : '🔴 红筷赢麻了！';
+      subEl.textContent = world.duelScores.p2 + ' : ' + world.duelScores.p1;
+      priBtn.textContent = '⚔️ 再抢一局';
+      secBtn.style.display = 'block';
+      secBtn.textContent = '🎭 设局坑TA';
+    } else if (world.mode === 'prank') {
+      var spec = world.prankSpec || {};
+      var stamp = E.TAUNT_STAMPS.find(function (t) { return t.id === spec.tauntId; }) || E.TAUNT_STAMPS[0];
+      if (world.status === 'won') {
+        titleEl.textContent = '🏆 识破整蛊拿下！';
+        subEl.textContent = stamp.icon + ' 🏓第' + (spec.volley || 1) + '回';
+      } else {
+        titleEl.textContent = stamp.icon + ' 中计啦：' + stamp.label;
+        subEl.textContent = '🏓第' + (spec.volley || 1) + '回';
+      }
+      priBtn.textContent = '⚡ 换规反坑 (🏓+' + ((spec.volley || 1) + 1) + ')';
+      secBtn.style.display = 'block';
+      secBtn.textContent = '↻ 不服重夹';
+    }
+
+    pop.classList.add('visible');
+  }
+
+  function startMode(mode, extra) {
+    document.getElementById('result-pop').classList.remove('visible');
+    if (mode === 'daily') {
+      world = E.createGame({ mode: 'daily', day: currentDay, ghostEnabled: true });
+    } else if (mode === 'fair') {
+      world = E.createGame({ mode: 'fair', excludedFoods: excludedFairFoods });
+    } else if (mode === 'duel') {
+      world = E.createGame({ mode: 'duel' });
+    } else if (mode === 'prank') {
+      activePrankPatch = (extra && extra.patch) || activePrankPatch || E.compileRulePatch(builderState);
+      world = E.createGame({ mode: 'prank', prankSpec: activePrankPatch });
+    }
+    syncHud();
+  }
+
+  /* Arena Pure-Tap Handler */
+  (function bindArenaTap() {
+    var sx = 0, sy = 0, active = false;
+    arenaCanvas.addEventListener('pointerdown', function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      sx = e.clientX;
+      sy = e.clientY;
+      active = true;
+    });
+    arenaCanvas.addEventListener('pointermove', function (e) {
+      if (!active) return;
+      if (Math.hypot(e.clientX - sx, e.clientY - sy) > 12) active = false;
+    });
+    arenaCanvas.addEventListener('pointercancel', function () { active = false; });
+    arenaCanvas.addEventListener('pointerup', function (e) {
+      if (!active) return;
+      active = false;
+      if (paused || world.status !== 'playing') return;
+
+      var rect = arenaCanvas.getBoundingClientRect();
+      var x = ((e.clientX - rect.left) / (rect.width || 320)) * E.WORLD_SIZE;
+      var y = ((e.clientY - rect.top) / (rect.height || 320)) * E.WORLD_SIZE;
+
+      if (firstTap) {
+        firstTap = false;
+        track('first_tap');
+      }
+      var res = E.tapArena(world, x, y);
+      if (res.sound) renderer.playSound(res.sound);
+
+      if (world.status !== 'playing') {
+        track('round_complete');
+        var caught = world.status === 'won' || world.status === 'picked';
+        showResultOverlay(caught ? awardCatch(world, currentDay) : []);
+      }
+      syncHud();
+    });
+  })();
+
+  /* Result Card Actions */
+  bindPureTap(document.getElementById('btn-res-primary'), function () {
+    if (world.mode === 'daily') {
+      if (world.status === 'won') {
+        currentDay = (currentDay % E.DAILY_LEVELS.length) + 1;
+      }
+      startMode('daily');
+    } else if (world.mode === 'fair') {
+      startMode('fair');
+    } else if (world.mode === 'duel') {
+      startMode('duel');
+    } else if (world.mode === 'prank') {
+      openPrankSheet(world.prankSpec);
+    }
+  });
+
+  bindPureTap(document.getElementById('btn-res-secondary'), function () {
+    if (surface === 'card') {
+      var packet = {
+        surface: 'page', seedContext: 'day_' + currentDay,
+        earnedArtifact: world.caughtFoodId || world.targetFoodId || 'dumpling', unfinishedHook: 'prank_workshop'
+      };
+      track('portal_jump');
+      if (B) B.openLandingPage(B.encodeHandoff(packet), window);
+      else window.location.search = new URLSearchParams({
+        dy_v: '1', dy_s: packet.surface, dy_sc: packet.seedContext, dy_ea: packet.earnedArtifact, dy_uh: packet.unfinishedHook
+      }).toString();
+      return;
+    }
+    if (world.mode === 'fair') {
+      startMode('daily');
+    } else if (world.mode === 'prank') {
+      startMode('prank', { patch: activePrankPatch });
+    } else {
+      builderState.targetFoodId = world.targetFoodId || 'dumpling';
+      openPrankSheet(null);
+    }
+  });
+
+  /* Top Mode Tabs & Sound */
+  bindPureTap(document.getElementById('tab-daily'), function () { startMode('daily'); });
+  bindPureTap(document.getElementById('tab-fair'), function () { startMode('fair'); });
+  bindPureTap(document.getElementById('tab-duel'), function () { startMode('duel'); });
+  bindPureTap(document.getElementById('tab-prank'), function () { openPrankSheet(activePrankPatch); });
+
+  bindPureTap(document.getElementById('btn-sound'), function () {
+    if (paused) return;
+    var nextMuted = !renderer.isMuted();
+    renderer.setMuted(nextMuted);
+    var btn = document.getElementById('btn-sound');
+    btn.textContent = nextMuted ? '🔇' : '🔊';
+    btn.classList.toggle('unmuted', !nextMuted);
+    if (!nextMuted) renderer.playSound('bloop');
+  });
+
+  var clearButton = document.getElementById('btn-clear');
+  var clearTimer = null;
+  function disarmClear() {
+    clearTimeout(clearTimer);
+    clearTimer = null;
+    clearButton.textContent = '↺';
+    clearButton.setAttribute('aria-label', '清空便当');
+  }
+  bindPureTap(clearButton, function () {
+    if (clearTimer === null) {
+      clearButton.textContent = '🗑️?';
+      clearButton.setAttribute('aria-label', '确认清空便当');
+      clearTimer = setTimeout(disarmClear, 1800);
+      return;
+    }
+    disarmClear();
+    try {
+      archiveStore.clear();
+      save = E.createEmptySave();
+      syncHud();
+      flashToast('🍱 便当已清空');
+    } catch (_e) {
+      flashToast('🍱 清空没成功，再试试');
+    }
+  });
+
+  var foodSlots = ['dumpling', 'chicken', 'egg', 'noodle', 'octopus', 'boba'];
+  var slotOptions = {
+    targetFoodId: foodSlots,
+    traitId: E.TRAIT_CHIPS.map(function (chip) { return chip.id; }),
+    triggerId: E.TRIGGER_CHIPS.map(function (chip) { return chip.id; }),
+    tauntId: E.TAUNT_STAMPS.map(function (chip) { return chip.id; })
+  };
+  var slotKeys = Object.keys(slotOptions);
+  function readSlots() {
+    return Object.fromEntries(slotKeys.map(function (key) { return [key, builderState[key]]; }));
+  }
+  function mixOffline(slots) {
+    var result = {};
+    slotKeys.forEach(function (key) {
+      var options = slotOptions[key].filter(function (value) { return value !== slots[key]; });
+      result[key] = options[Math.floor(Math.random() * options.length)];
+    });
+    return result;
+  }
+  function compileSlots(slots) {
+    if (!slots || !slotKeys.every(function (key) { return slotOptions[key].includes(slots[key]); })) return null;
+    var selected = Object.fromEntries(slotKeys.map(function (key) { return [key, slots[key]]; }));
+    return builderState.basePatch ? E.buildCounterPrankPatch(builderState.basePatch, selected) : E.compileRulePatch(selected);
+  }
+  var aiClient = B && B.createStructuredAIClient({
+    timeoutMs: 3000, allowlistedKeys: slotKeys, fallbackGenerator: mixOffline
+  }, window);
+  var mixVersion = 0;
+  var mixTurn = 0;
+  var mixButton = document.getElementById('btn-mix');
+  function invalidateMix() {
+    mixVersion++;
+    if (aiClient) aiClient.bumpVersion();
+    mixButton.disabled = false;
+    mixButton.textContent = '✨ 鬼才配锅';
+  }
+  bindPureTap(mixButton, async function () {
+    if (mixButton.disabled) return;
+    mixButton.disabled = true;
+    var version = ++mixVersion;
+    var slots = readSlots();
+    var response;
+    mixButton.textContent = '🍳 配锅中';
+    if (aiClient) {
+      try { response = await aiClient.request(++mixTurn, slots); } catch (_e) {}
+    }
+    if (version !== mixVersion) return;
+    mixButton.disabled = false;
+    if (response && response.stale) return;
+    mixButton.textContent = '✨ 鬼才配锅';
+    var patch = response && compileSlots(response.data);
+    if (!patch || response.source === 'fallback') {
+      track('fallback_triggered');
+      if (!patch) patch = compileSlots(mixOffline(slots));
+    }
+    if (!patch) return;
+    slotKeys.forEach(function (key) { builderState[key] = patch[key]; });
+    document.getElementById('share-done-bar').classList.remove('visible');
+    renderPrankSheet();
+    renderer.playSound('clack');
+    flashToast('✨ 鬼才阴招已配好！');
+  });
+
+  function renderPrankSheet() {
+    renderSlot('slot-foods', 'targetFoodId', foodSlots.map(function (id) {
+      return { id: id, icon: E.FOODS[id].emoji, label: E.FOODS[id].name };
+    }));
+    renderSlot('slot-traits', 'traitId', E.TRAIT_CHIPS);
+    renderSlot('slot-triggers', 'triggerId', E.TRIGGER_CHIPS);
+    renderSlot('slot-taunts', 'tauntId', E.TAUNT_STAMPS);
+  }
+
+  function renderSlot(gridId, key, chips) {
+    var grid = document.getElementById(gridId);
+    grid.innerHTML = '';
+    chips.forEach(function (chip) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'tap-btn pick-chip' + (builderState[key] === chip.id ? ' selected' : '');
+      button.innerHTML = '<span class="ico">' + chip.icon + '</span><span>' +
+        (key === 'triggerId' ? chip.label.slice(0, 2) : chip.label) + '</span>';
+      bindPureTap(button, function () {
+        invalidateMix();
+        builderState[key] = chip.id;
+        document.getElementById('share-done-bar').classList.remove('visible');
+        renderer.playSound('clack');
+        renderPrankSheet();
+      });
+      grid.appendChild(button);
+    });
+  }
+
+  function openPrankSheet(counterBase) {
+    builderState.basePatch = counterBase || null;
+    document.getElementById('sheet-title').textContent = counterBase
+      ? '🏓 反坑第' + ((counterBase.volley || 1) + 1) + '回'
+      : '🎭 设局坑好友';
+    document.getElementById('share-done-bar').classList.remove('visible');
+    renderPrankSheet();
+    document.getElementById('prank-backdrop').classList.add('visible');
+  }
+
+  function closePrankSheet() {
+    invalidateMix();
+    document.getElementById('prank-backdrop').classList.remove('visible');
+  }
+
+  function buildCurrentPatch() {
+    return compileSlots(readSlots());
+  }
+
+  bindPureTap(document.getElementById('btn-close-sheet'), closePrankSheet);
+
+  bindPureTap(document.getElementById('btn-try-self'), function () {
+    var patch = buildCurrentPatch();
+    if (!patch) return;
+    closePrankSheet();
+    startMode('prank', { patch: patch });
+    flashToast('🥢 已装入锅，快戳试试！');
+  });
+
+  bindPureTap(document.getElementById('btn-make-share'), function () {
+    var patch = buildCurrentPatch();
+    if (!patch) return;
+    activePrankPatch = patch;
+    var q = E.encodePrankUrl(patch);
+    lastGeneratedShareUrl = window.location.href.split('?')[0] + q;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(lastGeneratedShareUrl).catch(function () {});
+      }
+    } catch (_e) {}
+    renderer.playSound('win');
+    document.getElementById('share-done-text').textContent = '✅ 已复制第' + patch.volley + '回整蛊链接';
+    document.getElementById('share-done-bar').classList.add('visible');
+  });
+
+  bindPureTap(document.getElementById('btn-sim-friend'), function () {
+    var decoded = E.decodePrankUrl('?' + (lastGeneratedShareUrl.split('?')[1] || ''));
+    closePrankSheet();
+    if (decoded.isPrank) {
+      startMode('prank', { patch: decoded.patch });
+      flashToast('🌶️ 好友视角已开启：3筷试夹！');
+    }
+  });
+
+  /* 60fps Main Animation Loop */
+  var lastTs = 0;
+  var frameId = null;
+  var paused = false;
+  var mutedBeforePause = true;
+  function pauseGame() {
+    if (paused) return;
+    paused = true;
+    if (frameId !== null) window.cancelAnimationFrame(frameId);
+    frameId = null;
+    mutedBeforePause = renderer.isMuted();
+    renderer.setMuted(true);
+  }
+  function resumeGame() {
+    if (paused) renderer.setMuted(mutedBeforePause);
+    paused = false;
+    if (frameId !== null) return;
+    lastTs = 0;
+    frameId = window.requestAnimationFrame(frame);
+  }
+  function frame(ts) {
+    frameId = null;
+    if (paused) return;
+    if (!lastTs) lastTs = ts;
+    var dt = Math.min(0.05, Math.max(0, (ts - lastTs) / 1000));
+    lastTs = ts;
+
+    E.stepWorld(world, dt);
+    renderer.renderFrame(world);
+    renderer.renderBentoCanvas(bentoCanvas, E.getUnlockedBentoItems(save), ts / 1000);
+
+    frameId = window.requestAnimationFrame(frame);
+  }
+
+  syncHud();
+  if (!friendGame && handoff && handoff.valid) {
+    if (handoff.unfinishedHook === 'prank_workshop') {
+      if (foodSlots.includes(handoff.earnedArtifact)) builderState.targetFoodId = handoff.earnedArtifact;
+      openPrankSheet(null);
+    }
+    flashToast('🥢 已续接刚刚那锅！');
+  }
+  if (B) {
+    var lifecycle = B.createLifecycleController({ onPause: pauseGame, onResume: resumeGame }, window);
+    if (lifecycle.isPaused()) pauseGame();
+    else resumeGame();
+  } else {
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) pauseGame(); else resumeGame();
+    });
+    if (document.hidden) pauseGame(); else resumeGame();
+  }
+})();
+</script>
+</body>
+</html>

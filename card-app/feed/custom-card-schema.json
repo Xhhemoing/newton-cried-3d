@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["day", "weather", "levelId", "seed"],
+  "properties": {
+    "day": { "type": "integer", "minimum": 1, "maximum": 7 },
+    "weather": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["day", "icon", "title", "modifierLaw"],
+      "properties": {
+        "day": { "type": "integer", "minimum": 1, "maximum": 7 },
+        "icon": { "type": "string", "minLength": 1, "maxLength": 2 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 8 },
+        "modifierLaw": { "enum": ["zero_g", "jelly", "tornado", "giant", "repel", "time_slow"] }
+      }
+    },
+    "levelId": { "enum": ["warmup"] },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 2147483647 }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "douyin-interest-card-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "description": "抖音 AI 创变者计划 · 兴趣卡外部开发与 AI 工坊标准交接工作区",
+  "scripts": {
+    "test": "node --test tools/workshop-handoff.test.cjs tests/*.test.cjs promo/promo.test.cjs refs/rebel-chopsticks-html-proto/engine.test.cjs",
+    "test:newton": "node --test tests/*.test.cjs promo/promo.test.cjs",
+    "test:refs": "node --test refs/rebel-chopsticks-html-proto/engine.test.cjs",
+    "check": "node tools/workshop-handoff.cjs check",
+    "handoff": "node tools/workshop-handoff.cjs pack",
+    "promo:serve": "node -e \"const http=require('node:http'),fs=require('node:fs'),path=require('node:path');const m={'.html':'text/html;charset=utf-8','.css':'text/css;charset=utf-8','.js':'text/javascript;charset=utf-8','.svg':'image/svg+xml'};http.createServer((req,res)=>{const p=path.join('promo',req.url==='/'?'index.html':req.url.split('?')[0]);if(!fs.existsSync(p)||fs.statSync(p).isDirectory()){res.writeHead(404);return res.end('Not found');}res.writeHead(200,{'Content-Type':m[path.extname(p)]||'application/octet-stream'});fs.createReadStream(p).pipe(res);}).listen(4173,()=>console.log('Promo 3D Showcase: http://127.0.0.1:4173'));\"",
+    "verify": "node --test tools/workshop-handoff.test.cjs tests/*.test.cjs promo/promo.test.cjs refs/rebel-chopsticks-html-proto/engine.test.cjs && node tools/workshop-handoff.cjs check && node tools/workshop-handoff.cjs pack"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

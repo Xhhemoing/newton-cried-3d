@@ -1,0 +1,2274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>《这句怎么回》兴趣卡全流程原型 Demo (V3 Pop-Comic)</title>
+<style>
+  :root {
+    --stage-bg: #0B0C10;
+    --panel: #14151B;
+    --panel-2: #1D1E26;
+    --border: #2C2E3A;
+    --text: #F4F4F5;
+    --muted: #A1A1AA;
+    --ink: #18181B;
+    --cream: #FFFBF0;
+    --cream-2: #FEF3C7;
+    --neon-pink: #FE2C55;
+    --neon-cyan: #25F4EE;
+    --gold: #F59E0B;
+    --teal: #0F766E;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: radial-gradient(circle at 22% 10%, #1C1324 0%, #0B0C10 60%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 12px 14px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Top 6-Step Full-Flow Bar */
+  .top-bar {
+    width: 100%;
+    max-width: 1140px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 9px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .journey-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+  }
+  .step-pill {
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 9px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.14s ease;
+  }
+  .step-pill:hover { color: #FFF; border-color: #52525B; }
+  .step-pill.active {
+    background: linear-gradient(135deg, rgba(254,44,85,0.28), rgba(37,244,238,0.22));
+    border-color: var(--neon-pink);
+    color: #FFF;
+  }
+  .step-arrow { color: #52525B; font-size: 10px; }
+
+  .top-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .btn-reel {
+    border: none;
+    background: linear-gradient(135deg, #FE2C55, #E11D48);
+    color: #FFF;
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 6px 11px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 3px 12px rgba(254,44,85,0.35);
+  }
+  .btn-reel.running {
+    background: #27272A;
+    border: 1px solid var(--neon-pink);
+    box-shadow: none;
+  }
+  .btn-util {
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 9px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .btn-util.active {
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+  }
+
+  /* Main Stage */
+  .workspace {
+    width: 100%;
+    max-width: 1140px;
+    display: grid;
+    grid-template-columns: 390px 1fr;
+    gap: 18px;
+    align-items: start;
+    justify-content: center;
+  }
+  .workspace.war-hidden {
+    grid-template-columns: 390px;
+  }
+  .workspace.war-hidden .war-room {
+    display: none;
+  }
+
+  /* 390x844 Douyin Phone Simulator */
+  .phone-frame {
+    position: relative;
+    width: 390px;
+    height: 844px;
+    background: #0F0F13;
+    border-radius: 38px;
+    border: 6px solid #2A2B34;
+    box-shadow: 0 28px 75px rgba(0, 0, 0, 0.78), 0 0 0 1px rgba(255,255,255,0.08);
+    overflow: hidden;
+  }
+
+  .phone-status {
+    position: absolute;
+    top: 8px; left: 22px; right: 22px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,0.85);
+    z-index: 44; pointer-events: none;
+  }
+  .phone-notch {
+    position: absolute;
+    top: 6px; left: 50%; transform: translateX(-50%);
+    width: 96px; height: 18px; background: #050507; border-radius: 999px;
+    z-index: 45; pointer-events: none;
+  }
+
+  /* Authentic Douyin Top Feed Nav (inside 56px top safe zone) */
+  .dy-top-nav {
+    position: absolute;
+    top: 28px; left: 0; right: 0; height: 26px;
+    display: flex; align-items: center; justify-content: center; gap: 22px;
+    font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.58);
+    z-index: 26; pointer-events: none;
+  }
+  .dy-top-nav .dy-tab-active {
+    color: #FFF;
+    position: relative;
+  }
+  .dy-top-nav .dy-tab-active::after {
+    content: '';
+    position: absolute; left: 4px; right: 4px; bottom: -4px;
+    height: 2.5px; border-radius: 2px; background: #FFF;
+  }
+
+  /* Douyin Safe-Zone Overlay (56px / 76px / 116px) */
+  .safe-overlay {
+    position: absolute; inset: 0; z-index: 39; pointer-events: none; display: none;
+  }
+  .safe-overlay.visible { display: block; }
+  .sz-top {
+    position: absolute; top: 0; left: 0; right: 0; height: 56px;
+    background: rgba(239,68,68,0.22); border-bottom: 1px dashed rgba(248,113,113,0.9);
+    display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px;
+    font-size: 10px; color: #FECACA;
+  }
+  .sz-right {
+    position: absolute; top: 56px; right: 0; bottom: 116px; width: 76px;
+    background: rgba(239,68,68,0.18); border-left: 1px dashed rgba(248,113,113,0.9);
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    gap: 10px; padding-bottom: 14px; font-size: 10px; color: #FECACA;
+  }
+  .sz-bottom {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 116px;
+    background: rgba(239,68,68,0.22); border-top: 1px dashed rgba(248,113,113,0.9);
+    display: flex; flex-direction: column; justify-content: center; padding: 8px 14px;
+    font-size: 10px; color: #FECACA;
+  }
+
+  /* Douyin Right Action Rail */
+  .dy-right-rail {
+    position: absolute; right: 10px; bottom: 128px; width: 52px;
+    display: flex; flex-direction: column; align-items: center; gap: 13px;
+    z-index: 25;
+  }
+  .dy-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--neon-pink), #FB7185);
+    border: 2px solid #FFF;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 900; color: #FFF;
+    position: relative;
+  }
+  .dy-avatar::after {
+    content: '+'; position: absolute; bottom: -6px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--neon-pink); color: #FFF;
+    font-size: 11px; font-weight: 800; line-height: 16px; text-align: center;
+  }
+  .dy-rail-btn {
+    background: none; border: none; color: #FFF;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    cursor: pointer; font-size: 10px; font-weight: 700;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.85);
+  }
+  .dy-rail-icon {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255,255,255,0.14);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    transition: transform 0.12s ease;
+  }
+  .dy-rail-btn:active .dy-rail-icon { transform: scale(0.88); }
+  .dy-rail-btn.liked .dy-rail-icon { color: var(--neon-pink); background: rgba(254,44,85,0.25); }
+
+  /* Shared Bottom Douyin Author & Anchor Bar (inside 116px bottom safe zone) */
+  .feed-bottom-area {
+    position: absolute; left: 14px; right: 76px; bottom: 8px;
+    display: flex; flex-direction: column; gap: 6px; z-index: 24;
+  }
+  .anchor-cta {
+    border: 1.5px solid rgba(255,255,255,0.35);
+    background: linear-gradient(90deg, #FE2C55, #E11D48);
+    color: #FFF; border-radius: 10px; padding: 8px 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    cursor: pointer; animation: anchor-glow 2s infinite;
+  }
+  @keyframes anchor-glow {
+    0%, 100% { box-shadow: 0 0 12px rgba(254,44,85,0.45); }
+    50% { box-shadow: 0 0 22px rgba(37,244,238,0.65); }
+  }
+  .anchor-cta-left { font-size: 11.5px; font-weight: 800; }
+  .anchor-cta-right { font-size: 10.5px; background: rgba(0,0,0,0.32); padding: 2px 7px; border-radius: 999px; font-weight: 700; }
+  .feed-author { font-size: 12px; font-weight: 800; color: #FFF; }
+  .feed-desc { font-size: 10.5px; color: #E4E4E7; line-height: 1.32; }
+  .dy-bottom-tabs {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.55);
+  }
+  .dy-bottom-tabs .active-tab { color: #FFF; }
+
+  /* Stage 0: Feed Promo Short Video */
+  .feed-promo-view {
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 25%, #3B1228 0%, #121218 58%, #0B1920 100%);
+    padding: 56px 76px 116px 16px;
+    display: none; flex-direction: column; justify-content: space-between; z-index: 12;
+  }
+  .feed-promo-view.visible { display: flex; }
+
+  .promo-badge {
+    align-self: flex-start; font-size: 10px; font-weight: 800;
+    color: var(--neon-cyan); background: rgba(37,244,238,0.14);
+    border: 1px solid rgba(37,244,238,0.45); padding: 4px 8px; border-radius: 6px;
+  }
+  .promo-kinetic {
+    background: var(--cream);
+    color: var(--ink);
+    border: 2.5px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--neon-pink);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex; flex-direction: column; gap: 9px;
+  }
+  .promo-hook-title {
+    font-size: 17px; font-weight: 900; line-height: 1.28; color: var(--ink);
+  }
+  .promo-cat-row {
+    display: flex; align-items: center; gap: 8px;
+    background: #FEF3C7; border: 1.5px solid var(--ink); border-radius: 11px; padding: 7px 9px;
+  }
+  .promo-sim-msg {
+    font-size: 11.5px; font-weight: 800; color: var(--ink); line-height: 1.35;
+  }
+  .promo-sim-tap {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--ink); color: #FFF; font-size: 11px; font-weight: 800;
+    padding: 7px 9px; border-radius: 8px;
+  }
+  .promo-sim-tap em { font-style: normal; color: #FDE047; animation: pulse-tag 1.2s infinite; }
+  @keyframes pulse-tag { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+  .promo-progress-track {
+    height: 4px; background: rgba(255,255,255,0.2); border-radius: 999px; overflow: hidden;
+  }
+  .promo-progress-bar {
+    height: 100%; width: 65%; background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan));
+    animation: reel-bar 4s linear infinite;
+  }
+  @keyframes reel-bar { 0% { width: 10%; } 100% { width: 100%; } }
+
+  .swipe-to-card-btn {
+    border: 1.5px dashed rgba(255,255,255,0.45);
+    background: rgba(255,255,255,0.1);
+    color: #FFF; font-size: 11.5px; font-weight: 800;
+    padding: 8px 10px; border-radius: 10px; cursor: pointer; text-align: center;
+  }
+
+  /* Stage 1: L1 Interest Card Viewport (Strictly overflow:hidden, 56/76/116/16 safe zone) */
+  .interest-card-viewport {
+    position: relative;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    padding: 56px 76px 116px 16px;
+    display: none; flex-direction: column; gap: 7px;
+    background:
+      radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+      radial-gradient(circle at 25% 15%, #3B1228 0%, #111118 68%);
+    background-size: 14px 14px, 100% 100%;
+    z-index: 15;
+  }
+  .interest-card-viewport.visible { display: flex; }
+
+  .interest-card-viewport.shake {
+    animation: container-shake 180ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+  @keyframes container-shake {
+    0% { transform: translate3d(0, 0, 0); }
+    25% { transform: translate3d(-4px, 2px, 0); }
+    50% { transform: translate3d(4px, -2px, 0); }
+    75% { transform: translate3d(-2px, 1px, 0); }
+    100% { transform: translate3d(0, 0, 0); }
+  }
+
+  .l1-top {
+    display: flex; align-items: center; justify-content: space-between; gap: 5px; flex-shrink: 0;
+  }
+  .alert-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10.5px; font-weight: 800; color: #FFE4E6;
+    background: rgba(254,44,85,0.28); border: 1px solid rgba(254,44,85,0.75);
+    padding: 4px 8px; border-radius: 999px; white-space: nowrap;
+  }
+  .pulse-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--neon-pink);
+    animation: pulse-tag 1s infinite;
+  }
+
+  .pure-btn {
+    border: none; outline: none; cursor: pointer;
+    touch-action: manipulation; user-select: none; -webkit-tap-highlight-color: transparent;
+    transition: transform 80ms ease, filter 80ms ease;
+  }
+  .pure-btn.is-pressing { transform: scale(0.96); filter: brightness(0.92); }
+
+  .switch-btn {
+    background: var(--cream); border: 2px solid var(--ink); color: var(--ink);
+    font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 8px;
+    box-shadow: 2px 2px 0 var(--neon-cyan);
+  }
+
+  .blind-banner {
+    display: none; background: #CCFBF1; border: 1.5px solid var(--teal);
+    color: #115E59; font-size: 10px; font-weight: 800;
+    padding: 4px 8px; border-radius: 8px; flex-shrink: 0;
+  }
+  .blind-banner.visible { display: block; }
+
+  /* Pop-Comic Cream Poster Card Surface */
+  .comic-card {
+    position: relative;
+    background: var(--cream);
+    background-image: radial-gradient(#E5DCC8 1px, transparent 1px);
+    background-size: 10px 10px;
+    color: var(--ink);
+    border: 2.5px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--neon-pink);
+    border-radius: 16px;
+    padding: 10px;
+    display: flex; flex-direction: column; gap: 7px;
+    flex: 1; min-height: 0;
+  }
+
+  /* ENTRY SCREEN (兴趣卡进入界面) */
+  .entry-stage {
+    display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0;
+    justify-content: space-between;
+  }
+  .entry-wechat-alert {
+    background: #FFFFFF;
+    border: 2px solid var(--ink);
+    border-radius: 11px;
+    padding: 7px 9px;
+    box-shadow: 2px 2px 0 #18181B;
+    animation: alert-jitter 3.2s infinite;
+  }
+  @keyframes alert-jitter {
+    0%, 88%, 100% { transform: translateX(0); }
+    90% { transform: translateX(-2px); }
+    93% { transform: translateX(2px); }
+    96% { transform: translateX(-1px); }
+  }
+  .entry-alert-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px; font-weight: 800; color: #E11D48; margin-bottom: 2px;
+  }
+  .entry-alert-msg {
+    font-size: 12.5px; font-weight: 900; line-height: 1.32; color: var(--ink);
+  }
+
+  .entry-hero {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 4px 0;
+    position: relative;
+  }
+  .mascot-float {
+    animation: cat-bob 2.4s ease-in-out infinite;
+  }
+  @keyframes cat-bob {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-4px); }
+  }
+  .ecg-svg {
+    width: 190px; height: 22px; overflow: visible;
+  }
+  .ecg-path {
+    fill: none; stroke: #FE2C55; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 220; stroke-dashoffset: 220;
+    animation: ecg-draw 2s linear infinite;
+  }
+  @keyframes ecg-draw {
+    0% { stroke-dashoffset: 220; }
+    100% { stroke-dashoffset: 0; }
+  }
+  .entry-title {
+    font-size: 24px; font-weight: 900; letter-spacing: -0.02em; color: var(--ink);
+    text-shadow: 2px 2px 0 #FDE047;
+    line-height: 1.1;
+  }
+  .entry-sub {
+    font-size: 10.5px; font-weight: 700; color: #52525B;
+  }
+
+  /* Fanned 3-tier teaser chips */
+  .fan-strip {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 2px 0;
+  }
+  .fan-chip {
+    background: #FFFFFF; border: 2px solid var(--ink); border-radius: 9px;
+    padding: 6px 4px; text-align: center; font-size: 10.5px; font-weight: 900;
+    color: var(--ink); box-shadow: 2px 2px 0 var(--ink);
+  }
+  .fan-chip small { display: block; font-size: 9px; font-weight: 600; color: #52525B; margin-top: 1px; }
+  .fan-chip.c-left { transform: rotate(-2.5deg); background: #ECFDF5; }
+  .fan-chip.c-mid  { transform: translateY(-2px); background: #FEF3C7; }
+  .fan-chip.c-right { transform: rotate(2.5deg); background: #FFE4E6; border-color: #E11D48; }
+
+  .entry-cta-btn {
+    width: 100%;
+    background: linear-gradient(90deg, #FE2C55, #E11D48);
+    color: #FFF;
+    border: 2.5px solid var(--ink);
+    box-shadow: 0 4px 0 var(--ink);
+    border-radius: 12px;
+    padding: 11px 10px;
+    font-size: 14px; font-weight: 900;
+    letter-spacing: 0.03em;
+    text-align: center;
+  }
+  .entry-cta-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--ink); }
+
+  /* BATTLE HEADER (READY / COUNTER / FINISHED) */
+  .battle-stage {
+    display: none; flex-direction: column; gap: 7px; flex: 1; min-height: 0;
+  }
+  .battle-stage.visible { display: flex; }
+
+  .battle-hud {
+    position: relative;
+    display: grid; grid-template-columns: 58px 1fr; gap: 8px; align-items: center;
+    background: #FFFFFF; border: 2px solid var(--ink); border-radius: 12px;
+    padding: 6px 8px; flex-shrink: 0;
+  }
+  .hud-meters { display: flex; flex-direction: column; gap: 5px; }
+  .meter-row { display: flex; flex-direction: column; gap: 2px; }
+  .meter-head {
+    display: flex; justify-content: space-between;
+    font-size: 9.5px; font-weight: 800; color: var(--ink);
+  }
+  .meter-track { height: 7px; background: #E4E4E7; border-radius: 999px; overflow: hidden; border: 1px solid var(--ink); }
+  .meter-fill { height: 100%; transition: width 280ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .fill-bonus { background: #F59E0B; }
+  .fill-health { background: #10B981; }
+
+  .delta-float {
+    position: absolute; top: -11px; right: 6px;
+    background: #FDE047; border: 1.5px solid var(--ink); color: var(--ink);
+    font-size: 10px; font-weight: 900; padding: 1px 7px; border-radius: 999px;
+    pointer-events: none; opacity: 0; z-index: 20;
+  }
+  .delta-float.pop { animation: float-pop 950ms ease forwards; }
+  @keyframes float-pop {
+    0% { opacity: 0; transform: translateY(6px) scale(0.9); }
+    20% { opacity: 1; transform: translateY(-2px) scale(1.06); }
+    80% { opacity: 1; transform: translateY(-8px) scale(1); }
+    100% { opacity: 0; transform: translateY(-14px) scale(0.95); }
+  }
+
+  .msg-card {
+    background: #FFFFFF; color: var(--ink);
+    border: 2px solid var(--ink); border-radius: 11px; padding: 8px 9px; flex-shrink: 0;
+  }
+  .msg-card.bounce { animation: bubble-bounce 180ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes bubble-bounce { 0% { transform: scale(0.96); } 55% { transform: scale(1.03); } 100% { transform: scale(1); } }
+  .msg-sender {
+    font-size: 9.5px; font-weight: 800; color: #E11D48; margin-bottom: 2px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .typing-hint { color: var(--teal); font-weight: 800; }
+  .msg-text { font-size: 13px; font-weight: 900; line-height: 1.32; color: var(--ink); }
+
+  /* 3 Pop-Comic Skill Cards */
+  .skill-stack { display: flex; flex-direction: column; gap: 6px; margin-top: auto; }
+  .skill-card {
+    width: 100%; background: #FFFFFF; color: var(--ink);
+    border: 2px solid var(--ink); border-left-width: 6px; border-radius: 11px;
+    padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    text-align: left; box-shadow: 2px 2px 0 var(--ink);
+  }
+  .skill-card.tier-mild { border-left-color: #10B981; }
+  .skill-card.tier-taiji { border-left-color: #F59E0B; }
+  .skill-card.tier-crazy { border-left-color: #FE2C55; background: linear-gradient(90deg, #FFF1F2, #FFFFFF 70%); }
+  .skill-title { font-size: 12.5px; font-weight: 900; }
+  .skill-sub { font-size: 10px; color: #52525B; font-weight: 600; }
+  .skill-go { font-size: 13px; font-weight: 900; color: var(--ink); }
+
+  /* Counter Stage */
+  .recall-tag {
+    display: none; align-self: center; font-size: 9.5px; font-weight: 800;
+    color: #52525B; background: #E4E4E7; padding: 2px 8px; border-radius: 999px;
+  }
+  .recall-tag.visible { display: inline-block; }
+  .reply-preview {
+    background: #ECFDF5; border: 1.5px solid #059669; border-radius: 9px;
+    padding: 6px 8px; font-size: 10.5px; line-height: 1.35; color: #064E3B;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .reply-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 9.5px; font-weight: 800; color: #047857;
+  }
+  .mini-copy {
+    background: #FFF; border: 1.5px solid var(--ink); color: var(--ink);
+    font-size: 9.5px; font-weight: 800; padding: 2px 6px; border-radius: 5px;
+  }
+  .counter-box {
+    background: #FFF1F2; border: 2px solid #E11D48; border-radius: 10px;
+    padding: 7px 8px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .counter-text { font-size: 11px; font-weight: 800; color: #881337; line-height: 1.32; }
+  .counter-os {
+    background: #FDE047; border: 1px solid var(--ink); color: var(--ink);
+    font-size: 10px; font-weight: 800; padding: 4px 6px; border-radius: 6px; line-height: 1.3;
+  }
+  .r2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: auto; }
+  .r2-btn {
+    background: var(--neon-pink); color: #FFF; border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--ink); font-size: 11px; font-weight: 900;
+    padding: 9px 6px; border-radius: 9px; text-align: center;
+  }
+  .r2-btn.alt { background: #FFFFFF; color: var(--ink); }
+
+  /* Climax Thermal Receipt */
+  .receipt-wrap {
+    position: relative;
+    background: #FFFFFF; color: var(--ink);
+    border: 2px dashed var(--ink); border-radius: 10px;
+    padding: 8px 9px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .stamp-badge {
+    position: absolute; top: -8px; right: 6px;
+    border: 2.5px solid #DC2626; color: #DC2626; background: rgba(255,251,240,0.96);
+    font-size: 10.5px; font-weight: 900; padding: 2px 7px; border-radius: 6px;
+    transform: rotate(-8deg); animation: stamp-slam 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes stamp-slam {
+    0% { transform: scale(1.18) rotate(-14deg); opacity: 0.2; }
+    45% { transform: scale(1.12) rotate(-12deg); opacity: 1; }
+    75% { transform: scale(0.96) rotate(-8deg); }
+    100% { transform: scale(1) rotate(-8deg); }
+  }
+  .receipt-head { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 900; }
+  .damage-tag { font-size: 9px; font-weight: 800; background: #FEE2E2; color: #B91C1C; padding: 1px 5px; border-radius: 4px; }
+  .receipt-final { background: #F4F4F5; padding: 5px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 700; line-height: 1.35; }
+  .receipt-os { font-size: 9.5px; color: #991B1B; font-weight: 700; line-height: 1.3; }
+  .receipt-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; font-size: 9px; color: #52525B; }
+  .peer-compare {
+    display: none; background: #CCFBF1; border: 1px solid var(--teal); color: #115E59;
+    font-size: 9.5px; font-weight: 800; padding: 4px 6px; border-radius: 5px;
+  }
+  .peer-compare.visible { display: block; }
+
+  .receipt-actions { display: flex; flex-direction: column; gap: 5px; margin-top: auto; }
+  .act-primary {
+    background: var(--teal); color: #FFF; border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--ink); border-radius: 9px; padding: 8px;
+    font-size: 11px; font-weight: 900; text-align: center;
+  }
+  .act-sub-row { display: grid; grid-template-columns: 1fr 1fr 0.8fr auto; gap: 4px; }
+  .act-sub {
+    background: #FFFFFF; border: 1.5px solid var(--ink); color: var(--ink);
+    border-radius: 7px; padding: 5px 4px; font-size: 9.5px; font-weight: 800; text-align: center;
+  }
+
+  /* Comment Drawer */
+  .comment-drawer {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 64%;
+    background: #18181E; border-top: 1px solid #3F3F46; border-radius: 18px 18px 0 0;
+    z-index: 36; display: none; flex-direction: column; padding: 12px 14px; gap: 9px;
+    box-shadow: 0 -18px 45px rgba(0,0,0,0.75);
+  }
+  .comment-drawer.visible { display: flex; }
+  .cd-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 800; }
+  .cd-close { background: #27272A; border: none; color: #FFF; font-size: 12px; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; }
+  .cd-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+  .cd-item { background: #22222A; border: 1px solid #32323E; border-radius: 9px; padding: 8px; font-size: 11px; line-height: 1.4; }
+  .cd-user { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: #A1A1AA; margin-bottom: 3px; }
+  .cd-badge { background: rgba(254,44,85,0.2); color: #FDA4AF; padding: 1px 5px; border-radius: 4px; font-size: 9px; }
+  .cd-post-btn {
+    border: none; background: linear-gradient(90deg, var(--neon-pink), #E11D48);
+    color: #FFF; font-size: 11.5px; font-weight: 800; padding: 9px; border-radius: 9px; cursor: pointer;
+  }
+
+  /* Stage 3: Realistic Douyin DM Blind-Test Simulator */
+  .dm-viewport {
+    position: relative; width: 100%; height: 100%;
+    background: #121216; color: #F4F4F5;
+    padding: 36px 14px 16px;
+    display: none; flex-direction: column; gap: 12px; z-index: 29;
+  }
+  .dm-viewport.visible { display: flex; }
+  .dm-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 10px; border-bottom: 1px solid #27272F;
+  }
+  .dm-peer-info { display: flex; align-items: center; gap: 8px; }
+  .dm-peer-avatar {
+    width: 34px; height: 34px; border-radius: 50%; background: #38BDF8;
+    color: #0F172A; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: 13px;
+  }
+  .dm-spark {
+    font-size: 10px; font-weight: 800; color: #FB923C;
+    background: rgba(251,146,60,0.16); padding: 2px 6px; border-radius: 999px;
+  }
+  .dm-chat-stream { flex: 1; display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+  .dm-msg-left {
+    align-self: flex-start; max-width: 82%; background: #27272E;
+    padding: 9px 11px; border-radius: 12px 12px 12px 4px; font-size: 12px; line-height: 1.4;
+  }
+  .dm-invite-card {
+    align-self: flex-end; width: 88%;
+    background: var(--cream); color: var(--ink);
+    border: 2.5px solid var(--ink); box-shadow: 4px 4px 0 var(--neon-cyan);
+    border-radius: 14px; padding: 11px; display: flex; flex-direction: column; gap: 7px;
+  }
+  .dm-invite-title { font-size: 13px; font-weight: 900; }
+  .dm-invite-meta {
+    font-family: ui-monospace, monospace; font-size: 10px; color: #52525B;
+    background: #F4F4F5; padding: 5px 7px; border-radius: 6px; word-break: break-all;
+  }
+  .dm-play-btn {
+    border: 2px solid var(--ink); background: var(--neon-pink); color: #FFF;
+    font-size: 12.5px; font-weight: 900; padding: 9px; border-radius: 9px; cursor: pointer;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .dm-copy-btn {
+    border: 1.5px solid var(--ink); background: #FFF; color: var(--ink);
+    font-size: 11px; font-weight: 800; padding: 6px; border-radius: 8px; cursor: pointer;
+  }
+
+  /* Stage 4: Warm Editorial Consumer L2 Landing Page */
+  .l2-viewport {
+    position: relative; width: 100%; height: 100%;
+    background: var(--cream); color: var(--ink);
+    padding: 36px 14px 16px; overflow-y: auto;
+    display: none; flex-direction: column; gap: 9px; z-index: 30;
+  }
+  .l2-viewport.visible { display: flex; }
+
+  .l2-handoff-bar {
+    background: var(--ink); color: #FFF;
+    border-radius: 12px; padding: 9px 11px;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  }
+  .l2-handoff-text { font-size: 10.5px; color: #D4D4D8; line-height: 1.35; }
+  .l2-handoff-text strong { display: block; color: #FDE047; font-size: 11.5px; }
+  .l2-back-btn {
+    background: #27272F; border: 1px solid #52525B; color: #FFF;
+    font-size: 10.5px; font-weight: 700; padding: 5px 8px; border-radius: 7px; cursor: pointer; white-space: nowrap;
+  }
+
+  .l2-box {
+    background: #FFFFFF; border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 #18181B;
+    border-radius: 12px; padding: 10px;
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .l2-label { font-size: 11.5px; font-weight: 900; color: var(--ink); }
+  .l2-input {
+    width: 100%; background: #FFFDF7; border: 1.5px solid var(--ink); border-radius: 8px;
+    padding: 8px 10px; color: var(--ink); font-size: 12px; font-weight: 600; outline: none;
+  }
+  .l2-input:focus { border-color: var(--neon-pink); }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
+  .preset-chip {
+    background: #FEF3C7; border: 1.5px solid var(--ink); color: var(--ink);
+    font-size: 10px; font-weight: 700; padding: 4px 7px; border-radius: 6px; cursor: pointer;
+  }
+  .l2-controls { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  .timeout-toggle { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700; color: #52525B; cursor: pointer; }
+  .compile-btn {
+    background: var(--teal); color: #FFF; border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--ink); border-radius: 8px; padding: 6px 12px;
+    font-size: 11.5px; font-weight: 900; cursor: pointer;
+  }
+
+  .priority-panel {
+    display: none; background: #FEF3C7; border: 1.5px solid #D97706;
+    border-radius: 8px; padding: 8px; flex-direction: column; gap: 6px; font-size: 11px; font-weight: 700; color: #78350F;
+  }
+  .priority-panel.visible { display: flex; }
+  .priority-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .prio-btn {
+    background: #FFF; border: 1.5px solid var(--ink); color: var(--ink);
+    font-size: 10.5px; font-weight: 800; padding: 6px; border-radius: 6px; cursor: pointer;
+  }
+
+  .compiled-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .c-tag { font-family: ui-monospace, monospace; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #E4E4E7; color: var(--ink); }
+  .c-tag.ban { background: #FEE2E2; color: #991B1B; }
+  .c-tag.ok { background: #CCFBF1; color: #115E59; }
+  .c-tag.warn { background: #FEF3C7; color: #92400E; }
+
+  .blind-compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .compare-col {
+    background: #F4F4F5; border: 1.5px solid #D4D4D8; border-radius: 8px;
+    padding: 7px; font-size: 10px; line-height: 1.38; color: #52525B;
+  }
+  .compare-col.ai {
+    border: 2px solid var(--teal); background: #F0FDFA; color: var(--ink); font-weight: 600;
+  }
+  .compare-col small { display: block; font-size: 9.5px; font-weight: 900; margin-bottom: 3px; }
+  .compare-col.ai small { color: var(--teal); }
+
+  .teaser-bar {
+    background: #FEF3C7; border: 1.5px dashed var(--ink); border-radius: 8px;
+    padding: 7px 9px; font-size: 10px; color: var(--ink); line-height: 1.35;
+  }
+  .archive-footer {
+    margin-top: auto; display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px; font-weight: 700; color: #52525B;
+  }
+  .clear-btn {
+    background: #FFF; border: 1.5px solid var(--ink); color: var(--ink);
+    font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; cursor: pointer;
+  }
+
+  /* Poster Export Modal */
+  .poster-modal {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.85);
+    z-index: 48; display: none; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px; gap: 10px;
+  }
+  .poster-modal.visible { display: flex; }
+  .poster-img {
+    max-width: 100%; max-height: 620px; border-radius: 12px;
+    border: 2px solid #FFF; box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+  }
+  .poster-btns { display: flex; gap: 8px; }
+  .poster-dl {
+    background: var(--neon-pink); color: #FFF; text-decoration: none;
+    font-size: 12px; font-weight: 800; padding: 8px 14px; border-radius: 8px;
+  }
+  .poster-close {
+    background: #27272A; color: #FFF; border: 1px solid #52525B;
+    font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer;
+  }
+
+  /* Auto-Reel Overlay */
+  .auto-reel-overlay { position: absolute; inset: 0; z-index: 41; pointer-events: none; display: none; }
+  .auto-reel-overlay.visible { display: block; }
+  .rec-badge {
+    position: absolute; top: 32px; left: 16px;
+    background: rgba(0,0,0,0.78); border: 1px solid var(--neon-pink);
+    color: #FFF; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px;
+  }
+  .rec-subtitle {
+    position: absolute; left: 14px; right: 76px; bottom: 82px;
+    background: rgba(0,0,0,0.86); border-left: 3px solid #FDE047;
+    color: #FDE047; font-size: 11.5px; font-weight: 800; line-height: 1.35;
+    padding: 7px 9px; border-radius: 6px;
+  }
+
+  .toast {
+    position: absolute; bottom: 126px; left: 50%; transform: translateX(-50%);
+    background: rgba(9,9,11,0.95); border: 1px solid #3F3F46;
+    color: #FAFAFA; font-size: 11px; font-weight: 700; padding: 6px 12px;
+    border-radius: 999px; z-index: 50; opacity: 0; pointer-events: none;
+    transition: opacity 150ms ease; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Right Column: War-Room */
+  .war-room {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 12px;
+    min-height: 844px;
+  }
+  .wr-tabs {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    background: #0D0D11; padding: 5px; border-radius: 10px; border: 1px solid var(--border);
+  }
+  .wr-tab {
+    border: none; background: transparent; color: var(--muted);
+    font-size: 12px; font-weight: 700; padding: 8px 6px; border-radius: 7px; cursor: pointer;
+  }
+  .wr-tab.active { background: #272730; color: #FFF; }
+  .wr-pane { display: none; flex-direction: column; gap: 11px; }
+  .wr-pane.active { display: flex; }
+  .wr-card {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .wr-h { font-size: 13px; font-weight: 800; color: #FFF; }
+  .wr-sub { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+  .script-sel { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sc-btn {
+    border: 1px solid var(--border); background: #121216; color: var(--muted);
+    font-size: 11px; font-weight: 700; padding: 6px 9px; border-radius: 7px; cursor: pointer;
+  }
+  .sc-btn.active { border-color: var(--neon-pink); color: #FFF; background: rgba(254,44,85,0.16); }
+  .timeline-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  .timeline-table th, .timeline-table td { padding: 7px 6px; border-bottom: 1px solid #2A2A34; text-align: left; vertical-align: top; }
+  .timeline-table th { color: var(--muted); font-size: 10.5px; }
+  .timeline-table td:first-child { font-family: ui-monospace, monospace; color: var(--neon-cyan); white-space: nowrap; font-weight: 700; }
+  .meta-kv { font-size: 11.5px; line-height: 1.48; background: #121216; border: 1px solid #2A2A34; border-radius: 8px; padding: 9px 10px; }
+  .meta-kv strong { color: #FDE047; }
+  .wr-btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .wr-btn { border: 1px solid #3F3F4E; background: #272732; color: #FFF; font-size: 11.5px; font-weight: 700; padding: 7px 11px; border-radius: 8px; cursor: pointer; }
+  .wr-btn.primary { background: var(--neon-pink); border-color: var(--neon-pink); }
+  .diag-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .diag-btn { border: 1px solid var(--border); background: #121216; color: #E4E4E7; text-align: left; padding: 8px 9px; border-radius: 8px; cursor: pointer; font-size: 11.5px; font-weight: 700; }
+  .diag-btn.active { border-color: var(--neon-cyan); background: rgba(37,244,238,0.1); }
+  .diag-btn small { display: block; font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 2px; }
+  .funnel-bars { display: flex; flex-direction: column; gap: 6px; }
+  .f-row { display: grid; grid-template-columns: 125px 1fr 32px; align-items: center; gap: 8px; font-size: 11px; }
+  .f-track { height: 13px; background: #111116; border-radius: 999px; overflow: hidden; }
+  .f-fill { height: 100%; background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan)); border-radius: 999px; transition: width 0.2s ease; }
+  .json-log { background: #0D0D11; border: 1px solid #2A2A34; border-radius: 8px; padding: 8px; font-family: ui-monospace, monospace; font-size: 10.5px; color: #A7F3D0; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
+
+  @media (max-width: 979px) {
+    .workspace { grid-template-columns: 1fr; justify-items: center; }
+    .war-room { width: 100%; min-height: auto; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Top 6-Step Full-Flow Journey Bar -->
+  <div class="top-bar">
+    <div class="journey-steps">
+      <button class="step-pill" id="nav-step-0" type="button">① 宣发短视频</button>
+      <span class="step-arrow">→</span>
+      <button class="step-pill active" id="nav-step-1" type="button">② 兴趣卡进入界面</button>
+      <span class="step-arrow">→</span>
+      <button class="step-pill" id="nav-step-2" type="button">③ 两回合反杀</button>
+      <span class="step-arrow">→</span>
+      <button class="step-pill" id="nav-step-3" type="button">④ 评论区盖楼</button>
+      <span class="step-arrow">→</span>
+      <button class="step-pill" id="nav-step-4" type="button">⑤ 私信盲测回流</button>
+      <span class="step-arrow">→</span>
+      <button class="step-pill" id="nav-step-5" type="button">⑥ 落地页真AI</button>
+    </div>
+    <div class="top-actions">
+      <button class="btn-reel" id="btn-auto-reel" type="button">🎬 演播14秒宣发片</button>
+      <button class="btn-util" id="btn-toggle-sfx" type="button">🔇 音效：关</button>
+      <button class="btn-util" id="btn-toggle-safezone" type="button">安全区红线</button>
+      <button class="btn-util active" id="btn-toggle-warroom" type="button">作战台：显</button>
+    </div>
+  </div>
+
+  <div class="workspace" id="workspace">
+    <!-- Left Column: 390x844 Douyin Phone Simulator -->
+    <div class="phone-frame" id="phone-frame">
+      <div class="phone-status">
+        <span>22:47</span>
+        <span>5G · 抖音推荐流</span>
+      </div>
+      <div class="phone-notch"></div>
+
+      <!-- Douyin Top Nav Chrome (Feed & L1) -->
+      <div class="dy-top-nav" id="dy-top-nav">
+        <span>关注</span>
+        <span>商城</span>
+        <span class="dy-tab-active">推荐</span>
+      </div>
+
+      <!-- Douyin Safe Zone Overlay -->
+      <div class="safe-overlay" id="safe-overlay">
+        <div class="sz-top">顶部导航避让区 (56px)</div>
+        <div class="sz-right">
+          <span>右侧列</span>
+          <span>76px</span>
+        </div>
+        <div class="sz-bottom">
+          <strong>底部文案 / 挂载条 / Tab 避让区 (116px)</strong>
+          <span>L1 核心按钮均在安全矩形内</span>
+        </div>
+      </div>
+
+      <!-- Auto-Reel Overlay -->
+      <div class="auto-reel-overlay" id="auto-reel-overlay">
+        <div class="rec-badge">● REC 14s全流程演播</div>
+        <div class="rec-subtitle" id="rec-subtitle">正在播放全流程演播...</div>
+      </div>
+
+      <!-- Shared Right Douyin Rail -->
+      <div class="dy-right-rail" id="dy-right-rail">
+        <div class="dy-avatar">猫</div>
+        <button class="dy-rail-btn" id="btn-dy-like" type="button">
+          <span class="dy-rail-icon">❤</span>
+          <span id="dy-like-count">2.4w</span>
+        </button>
+        <button class="dy-rail-btn" id="btn-dy-comment" type="button">
+          <span class="dy-rail-icon">💬</span>
+          <span id="dy-comment-count">318</span>
+        </button>
+        <button class="dy-rail-btn" id="btn-dy-fav" type="button">
+          <span class="dy-rail-icon">★</span>
+          <span>防身</span>
+        </button>
+        <button class="dy-rail-btn" id="btn-dy-share" type="button">
+          <span class="dy-rail-icon">↗</span>
+          <span>转发</span>
+        </button>
+      </div>
+
+      <!-- Stage 0: Feed Promo Short Video Simulator -->
+      <div class="feed-promo-view" id="feed-promo-view">
+        <div class="promo-badge">① 冷启动宣发短视频模拟（零出镜录屏样片）</div>
+
+        <div class="promo-kinetic">
+          <div class="promo-hook-title" id="promo-hook-title">
+            周六 22:47 老板发在吗？千万别只回收到！
+          </div>
+          <div class="promo-cat-row">
+            <div id="promo-cat-slot"></div>
+            <div class="promo-sim-msg" id="promo-sim-msg"></div>
+          </div>
+          <div class="promo-sim-tap">
+            <span>🔴 试了【体面发疯版】</span>
+            <em>⚡ 老板当场撤回消息！</em>
+          </div>
+          <div class="promo-progress-track"><div class="promo-progress-bar"></div></div>
+        </div>
+
+        <button class="swipe-to-card-btn" id="btn-swipe-to-entry" type="button">
+          👆 上滑刷入下一条：直接看【原生兴趣卡进入界面】 ▾
+        </button>
+      </div>
+
+      <!-- Shared Douyin Bottom Chrome -->
+      <div class="feed-bottom-area" id="feed-bottom-area">
+        <button class="anchor-cta" id="btn-enter-l1" type="button">
+          <span class="anchor-cta-left">⚡ 测测这句怎么回（进兴趣卡）</span>
+          <span class="anchor-cta-right">开玩 ›</span>
+        </button>
+        <div class="feed-author">@清醒黑猫嘴替 · 原创AI兴趣卡</div>
+        <div class="feed-desc" id="feed-video-desc">周六深夜被催改方案别内耗，点开兴趣卡测你的嘴替段位 #AI兴趣卡</div>
+        <div class="dy-bottom-tabs">
+          <span class="active-tab">首页</span>
+          <span>朋友</span>
+          <span style="background:#FFF;color:#000;padding:0 7px;border-radius:4px;">+</span>
+          <span>消息</span>
+          <span>我</span>
+        </div>
+      </div>
+
+      <!-- Stage 1: L1 Interest Card Viewport (Entry Screen + Battle + Receipt) -->
+      <div class="interest-card-viewport visible" id="l1-view">
+        <div class="l1-top">
+          <span class="alert-pill"><span class="pulse-dot"></span>血压 150 · <span id="l1-scenario-tag">职场修罗场</span></span>
+          <button class="pure-btn switch-btn" id="btn-switch-scenario" type="button">换题 ↻</button>
+        </div>
+
+        <div class="blind-banner" id="l1-blind-banner"></div>
+
+        <div class="comic-card">
+          <!-- Sub-state ENTRY: Dedicated Jaw-Dropping Interest Card Entry Screen -->
+          <div class="entry-stage" id="l1-stage-entry">
+            <div class="entry-wechat-alert">
+              <div class="entry-alert-head">
+                <span id="entry-sender">💬 周六 22:47 · 老板</span>
+                <span>刚刚 · 置顶警报</span>
+              </div>
+              <div class="entry-alert-msg" id="entry-incoming-text"></div>
+            </div>
+
+            <div class="entry-hero">
+              <div class="mascot-float" id="entry-cat-slot"></div>
+              <svg class="ecg-svg" viewBox="0 0 190 24" aria-hidden="true">
+                <polyline class="ecg-path" points="0,12 45,12 56,12 64,2 72,22 82,6 90,15 102,12 140,12 148,4 156,20 164,12 190,12" />
+              </svg>
+              <div class="entry-title">这句怎么回？</div>
+              <div class="entry-sub">0 打字 · 3 秒三档火力替你体面反杀</div>
+            </div>
+
+            <div class="fan-strip">
+              <button class="pure-btn fan-chip c-left" id="btn-fan-0" type="button">🟢 保命<small>先保饭碗</small></button>
+              <button class="pure-btn fan-chip c-mid" id="btn-fan-1" type="button">🟡 太极<small>双条稳控</small></button>
+              <button class="pure-btn fan-chip c-right" id="btn-fan-2" type="button">🔴 发疯<small>幽默创飞</small></button>
+            </div>
+
+            <button class="pure-btn entry-cta-btn" id="btn-entry-start" type="button">⚡ 立刻替TA接招</button>
+          </div>
+
+          <!-- Sub-state READY / COUNTER / FINISHED -->
+          <div class="battle-stage" id="l1-battle-stage">
+            <div class="battle-hud">
+              <div id="battle-cat-slot"></div>
+              <div class="delta-float" id="l1-delta-float">+58%</div>
+              <div class="hud-meters">
+                <div class="meter-row">
+                  <div class="meter-head"><span id="lbl-bonus">💰 年终奖保住率</span><span id="val-bonus">72</span></div>
+                  <div class="meter-track"><div class="meter-fill fill-bonus" id="bar-bonus" style="width:72%"></div></div>
+                </div>
+                <div class="meter-row">
+                  <div class="meter-head"><span id="lbl-health">🫀 乳腺畅通度</span><span id="val-health">28</span></div>
+                  <div class="meter-track"><div class="meter-fill fill-health" id="bar-health" style="width:28%"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="msg-card" id="l1-incoming-card">
+              <div class="msg-sender">
+                <span id="l1-sender">周六 22:47 · 老板</span>
+                <span class="typing-hint" id="l1-typing-hint"></span>
+              </div>
+              <div class="msg-text" id="l1-incoming-text"></div>
+            </div>
+
+            <!-- Round 1 -->
+            <div class="skill-stack" id="l1-stage-ready">
+              <button class="pure-btn skill-card tier-mild" id="btn-r1-0" type="button">
+                <div>
+                  <div class="skill-title" id="r1-title-0">🟢 卑微保命版</div>
+                  <div class="skill-sub" id="r1-sub-0"></div>
+                </div>
+                <span class="skill-go">▸</span>
+              </button>
+              <button class="pure-btn skill-card tier-taiji" id="btn-r1-1" type="button">
+                <div>
+                  <div class="skill-title" id="r1-title-1">🟡 滴水不漏太极版</div>
+                  <div class="skill-sub" id="r1-sub-1"></div>
+                </div>
+                <span class="skill-go">▸</span>
+              </button>
+              <button class="pure-btn skill-card tier-crazy" id="btn-r1-2" type="button">
+                <div>
+                  <div class="skill-title" id="r1-title-2">🔴 体面发疯版</div>
+                  <div class="skill-sub" id="r1-sub-2"></div>
+                </div>
+                <span class="skill-go">▸</span>
+              </button>
+            </div>
+
+            <!-- Round 2 Counter -->
+            <div id="l1-stage-counter" style="display:none;flex-direction:column;gap:5px;flex:1;">
+              <div class="recall-tag" id="l1-recall-tag">老板撤回了一条消息</div>
+              <div class="reply-preview">
+                <div class="reply-head">
+                  <span id="l1-r1-picked-tag">你的一轮出手</span>
+                  <button class="pure-btn mini-copy" id="btn-copy-r1" type="button">复制</button>
+                </div>
+                <div id="l1-r1-reply-text"></div>
+              </div>
+              <div class="counter-box">
+                <div class="counter-text" id="l1-counter-text"></div>
+                <div class="counter-os" id="l1-counter-os"></div>
+              </div>
+              <div class="r2-grid">
+                <button class="pure-btn r2-btn" id="btn-r2-0" type="button"></button>
+                <button class="pure-btn r2-btn alt" id="btn-r2-1" type="button"></button>
+              </div>
+            </div>
+
+            <!-- Climax Receipt -->
+            <div id="l1-stage-finished" style="display:none;flex-direction:column;gap:5px;flex:1;">
+              <div class="receipt-wrap">
+                <div class="stamp-badge" id="l1-badge">已读乱回宗师</div>
+                <div class="receipt-head">
+                  <span>《当代嘴替战绩小票》</span>
+                  <span class="damage-tag" id="l1-damage-tag">乳腺畅通 +99%</span>
+                </div>
+                <div class="reply-head" style="color:#0F766E;">
+                  <span id="l1-stance-label"></span>
+                  <button class="pure-btn mini-copy" id="btn-copy-final" type="button">一键复制</button>
+                </div>
+                <div class="receipt-final" id="l1-final-reply"></div>
+                <div class="receipt-os" id="l1-final-os"></div>
+                <div class="peer-compare" id="l1-peer-compare"></div>
+                <div class="receipt-meta">
+                  <span id="l1-demo-ratio"></span>
+                  <span id="l1-ai-notice"></span>
+                </div>
+              </div>
+
+              <div class="receipt-actions">
+                <button class="pure-btn act-primary" id="btn-go-l2" type="button">🔥 去落地页用真 AI 改我的对话 →</button>
+                <div class="act-sub-row">
+                  <button class="pure-btn act-sub" id="btn-open-poster" type="button">📸 存小票海报</button>
+                  <button class="pure-btn act-sub" id="btn-share-blind" type="button">⚡ 私信盲测</button>
+                  <button class="pure-btn act-sub" id="btn-open-comments" type="button">💬 评论</button>
+                  <button class="pure-btn act-sub" id="btn-replay" type="button">↻</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 2: Comment Debate Bottom Drawer -->
+      <div class="comment-drawer" id="comment-drawer">
+        <div class="cd-head">
+          <span>抖音评论区（演示模拟评论区 · 非诱导自发盖楼）</span>
+          <button class="cd-close" id="btn-close-comments" type="button">✕</button>
+        </div>
+        <div class="cd-list" id="cd-list"></div>
+        <button class="cd-post-btn" id="btn-post-my-badge" type="button">晒出我刚才打出的战绩段位（纯分享无锁）</button>
+      </div>
+
+      <!-- Stage 3: Realistic Douyin DM Blind-Test Simulator -->
+      <div class="dm-viewport" id="dm-view">
+        <div class="dm-header">
+          <div class="dm-peer-info">
+            <div class="dm-peer-avatar">友</div>
+            <div>
+              <div style="font-size:13px;font-weight:800;">饭搭子 / 工位损友</div>
+              <div class="dm-spark">🔥 抖音续火花第 18 天</div>
+            </div>
+          </div>
+          <button class="l2-back-btn" id="btn-dm-back" type="button">← 返回卡片</button>
+        </div>
+
+        <div class="dm-chat-stream">
+          <div class="dm-msg-left">刚才差点回老板“好的收到”，你快发我那个嘴替卡救命！！</div>
+          <div class="dm-invite-card">
+            <div class="dm-invite-title" id="dm-card-title">⚡ 好友发起同题盲测：《周六 22:47 老板催改》</div>
+            <div style="font-size:11px;color:#52525B;">各自先独自选出策略，完成后自动亮出双方段位反差（不泄露私人输入原文，无强制解锁）。</div>
+            <div class="dm-invite-meta" id="dm-query-preview">?s=boss_weekend&r1=crazy&r2=lock_9am&t=demo</div>
+            <button class="dm-play-btn" id="btn-dm-act-friend" type="button">👆 扮演好友点开盲测卡</button>
+            <button class="dm-copy-btn" id="btn-dm-copy" type="button">📋 复制公开盲测链接参数</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 4: Warm Pop-Editorial Consumer L2 Landing Page -->
+      <div class="l2-viewport" id="l2-view">
+        <div class="l2-handoff-bar">
+          <div class="l2-handoff-text">
+            <strong id="l2-restored-title">已无损续接：周六 22:47 · 老板</strong>
+            <span id="l2-restored-stance">卡内带入策略：待定</span>
+          </div>
+          <button class="l2-back-btn" id="btn-back-l1" type="button">← 返回卡片</button>
+        </div>
+
+        <div class="l2-box">
+          <div class="l2-label">Demo Day 杀器：一句话规则编译器（≤60字）</div>
+          <input class="l2-input" id="l2-input" maxlength="60" value="甄嬛体、不提钱、婉拒借充电宝" placeholder="输入新约束，如：甄嬛体、不提钱、婉拒借充电宝" />
+          <div class="chip-row">
+            <button class="preset-chip" id="chip-zhenhuan" type="button">甄嬛体+不提钱+婉拒借充电宝</button>
+            <button class="preset-chip" id="chip-commute" type="button">对方赶车+指路+不背锅</button>
+            <button class="preset-chip" id="chip-crazy" type="button">发疯文学+不提加班</button>
+            <button class="preset-chip" id="chip-conflict" type="button">冲突测：答应同时拒绝</button>
+          </div>
+          <div class="l2-controls">
+            <label class="timeout-toggle">
+              <input type="checkbox" id="chk-sim-timeout" />
+              模拟 3s 超时兜底
+            </label>
+            <button class="compile-btn" id="btn-compile-l2" type="button">编译并盲评对比</button>
+          </div>
+
+          <div class="priority-panel" id="l2-priority-panel">
+            <div id="l2-conflict-msg">检测到冲突约束：</div>
+            <div class="priority-btns">
+              <button class="prio-btn" id="btn-prio-decline" type="button">优先婉拒 · 守住边界</button>
+              <button class="prio-btn" id="btn-prio-accept" type="button">优先接下 · 限定缓冲</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="l2-box">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="l2-label">编译 JSON 约束与并排盲评</span>
+            <span class="c-tag ok" id="l2-status-pill">待编译</span>
+          </div>
+          <div class="compiled-chips" id="l2-compiled-chips"></div>
+
+          <div class="blind-compare-grid">
+            <div class="compare-col">
+              <small>离线固定模板（对照组）</small>
+              <div id="l2-out-baseline">点击上方编译查看对照</div>
+            </div>
+            <div class="compare-col ai">
+              <small>实时规则编译 AI（本案）</small>
+              <div id="l2-out-final">等待编译…</div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#52525B;">
+            <span id="l2-ai-notice">内容由 AI 生成（Demo 规则编译器演示）</span>
+            <button class="mini-copy" id="btn-copy-l2" type="button" style="cursor:pointer;">复制终答</button>
+          </div>
+        </div>
+
+        <div class="teaser-bar">
+          <strong>「生活急救箱 · 一核多卡扩展位」</strong>：第 2 周独立挂载《随便怎么选》（共用声明式外壳，独立提审零连坐）。
+        </div>
+
+        <div class="archive-footer">
+          <span id="archive-meter">本地归档：0 / 2000 B（0/8 条）</span>
+          <button class="clear-btn" id="btn-clear-archive" type="button">清空记录</button>
+        </div>
+      </div>
+
+      <!-- Real Canvas Receipt Poster Modal -->
+      <div class="poster-modal" id="poster-modal">
+        <img class="poster-img" id="poster-img" alt="嘴替战绩小票海报" />
+        <div class="poster-btns">
+          <a class="poster-dl" id="poster-download" download="嘴替战绩小票.png" href="#">下载 PNG 小票海报</a>
+          <button class="poster-close" id="btn-close-poster" type="button">关闭</button>
+        </div>
+      </div>
+
+      <div class="toast" id="toast">已复制</div>
+    </div>
+
+    <!-- Right Column: Collapsible War-Room -->
+    <div class="war-room" id="war-room">
+      <div class="wr-tabs">
+        <button class="wr-tab active" id="tab-promo" type="button">📣 宣发脚本库（零出镜）</button>
+        <button class="wr-tab" id="tab-sop" type="button">🚀 7天冷启动 &amp; 诊断SOP</button>
+        <button class="wr-tab" id="tab-telemetry" type="button">📊 实时埋点 &amp; 协议监视</button>
+      </div>
+
+      <!-- Tab 1 -->
+      <div class="wr-pane active" id="pane-promo">
+        <div class="wr-card">
+          <div class="wr-h">零出镜 14 秒录屏直发流程</div>
+          <div class="wr-sub">选一个场景后点顶部 <strong>「🎬 演播14秒宣发片」</strong>，直接局部录屏左侧手机画面即可发抖音；文案全部通过零诱导合规检查。</div>
+          <div class="script-sel">
+            <button class="sc-btn active" id="sc-btn-0" type="button">场景1：周六老板催改</button>
+            <button class="sc-btn" id="sc-btn-1" type="button">场景2：小组白嫖署名</button>
+            <button class="sc-btn" id="sc-btn-2" type="button">场景3：二姨过年催婚</button>
+          </div>
+        </div>
+
+        <div class="wr-card">
+          <div class="wr-h" id="wr-script-title"></div>
+          <table class="timeline-table">
+            <thead>
+              <tr><th>时间</th><th>录屏画面动作</th><th>口播 / 大字幕</th></tr>
+            </thead>
+            <tbody id="wr-script-tbody"></tbody>
+          </table>
+          <div class="meta-kv">
+            <div><strong>发布标题：</strong><span id="wr-douyin-title"></span></div>
+            <div style="margin-top:4px;"><strong>自发置顶评论（非诱导）：</strong><span id="wr-pinned-comment"></span></div>
+          </div>
+          <div class="wr-btn-row">
+            <button class="wr-btn primary" id="btn-copy-script" type="button">一键复制完整脚本</button>
+            <button class="wr-btn" id="btn-preview-in-phone" type="button">在左侧手机看宣发钩子</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2 -->
+      <div class="wr-pane" id="pane-sop">
+        <div class="wr-card">
+          <div class="wr-h">0 粉单人起号冷启动路径</div>
+          <div class="wr-sub">
+            1. <strong>Day 1 确认挂载路径</strong>：优先走赛事官方兴趣卡挂载通道，同步用 3 条“零出镜 14 秒录屏反应视频”起号。<br>
+            2. <strong>Day 2–3 首发单卡提审</strong>：只推《周六老板催改》单卡，L1 离线预审池零算力风险、秒过审。<br>
+            3. <strong>Day 4–7 单变量迭代</strong>：每 48 小时只改 1 个最弱漏斗指标，保留完整对照截图上 Demo Day。
+          </div>
+        </div>
+        <div class="wr-card">
+          <div class="wr-h">交互式漏斗断点诊断器</div>
+          <div class="diag-grid">
+            <button class="diag-btn active" id="diag-btn-0" type="button">播放破不了 500<small>冷启动曝光 &lt; 500</small></button>
+            <button class="diag-btn" id="diag-btn-1" type="button">卡内首触率 &lt; 10%<small>进卡3秒无点击</small></button>
+            <button class="diag-btn" id="diag-btn-2" type="button">选完1轮就划走<small>第2轮完成率 &lt; 50%</small></button>
+            <button class="diag-btn" id="diag-btn-3" type="button">小票不进落地页<small>L2 二跳率 &lt; 8%</small></button>
+          </div>
+          <div class="meta-kv" id="diag-detail"></div>
+        </div>
+      </div>
+
+      <!-- Tab 3 -->
+      <div class="wr-pane" id="pane-telemetry">
+        <div class="wr-card">
+          <div class="wr-h">全链路实时埋点计数器</div>
+          <div class="funnel-bars" id="funnel-bars"></div>
+        </div>
+        <div class="wr-card">
+          <div class="wr-h">最新状态外壳包（Envelope JSON）</div>
+          <div class="json-log" id="json-log">{}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="./engine.js"></script>
+<script>
+(function () {
+  var E = window.ReplyCardEngine;
+  var ARCHIVE_KEY = 'douyin_reply_card_archive_v3';
+
+  var session = E.createSession('boss_weekend');
+  var handoff = E.decodeHandoff(window.location.search);
+  if (handoff.restored) {
+    session = E.createSession(handoff.scenarioId);
+  }
+  var archive = E.parseArchive(safeGetStorage(ARCHIVE_KEY));
+  var telemetry = E.createTelemetry();
+
+  var currentStage = 'l1'; // 'feed' | 'l1' | 'dm' | 'l2'
+  var safeZoneVisible = false;
+  var warRoomVisible = true;
+  var sfxEnabled = false;
+  var audioCtx = null;
+  var selectedScriptIdx = 0;
+  var selectedDiagIdx = 0;
+  var isLiked = false;
+  var customComments = [];
+  var autoReelTimers = [];
+  var autoReelRunning = false;
+  var typingTimer = null;
+  var toastTimer = null;
+
+  function safeGetStorage(key) {
+    try { return window.localStorage.getItem(key) || ''; } catch (_e) { return ''; }
+  }
+  function safeSetStorage(key, val) {
+    try { window.localStorage.setItem(key, val); } catch (_e) {}
+  }
+
+  function showToast(msg) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 1800);
+  }
+
+  function copyText(text, label) {
+    if (!text) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          showToast(label || '已复制到剪贴板');
+        }).catch(function () {
+          showToast('已就绪：' + text.slice(0, 14) + '…');
+        });
+      } else {
+        showToast('已就绪：' + text.slice(0, 14) + '…');
+      }
+    } catch (_err) {
+      showToast('已就绪：' + text.slice(0, 14) + '…');
+    }
+  }
+
+  function playSfx(type) {
+    if (!sfxEnabled) return;
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtx) audioCtx = new Ctx();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      var now = audioCtx.currentTime;
+      if (type === 'stamp') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(55, now + 0.14);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      } else if (type === 'tick') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(760, now);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      } else {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(520, now);
+        osc.frequency.exponentialRampToValueAtTime(680, now + 0.06);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+      }
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.16);
+    } catch (_err) {}
+  }
+
+  /* Live-Reactive Vector Black Cat Mascot (Zero external URLs) */
+  function renderCatMascot(mood, scenarioId, size) {
+    var s = size || 110;
+    var propBadge = scenarioId === 'group_ppt_freerider' ? '📊 DDL' : (scenarioId === 'relative_marriage' ? '🏮 催婚' : '💻 22:47');
+    var bgCircle = mood === 'crazy' ? '#FFE4E6' : (mood === 'taiji' ? '#FEF3C7' : (mood === 'victory' ? '#CCFBF1' : '#E0F2FE'));
+    var eyeMarkup = '';
+    var mouthMarkup = '<path d="M46 66 Q50 70 54 66" fill="none" stroke="#FFFBF0" stroke-width="2.2" stroke-linecap="round"/>';
+    var extra = '';
+
+    if (mood === 'shocked') {
+      eyeMarkup =
+        '<circle cx="38" cy="54" r="6.5" fill="#FFFBF0"/><circle cx="38" cy="54" r="2.2" fill="#18181B"/>' +
+        '<circle cx="62" cy="54" r="6.5" fill="#FFFBF0"/><circle cx="62" cy="54" r="2.2" fill="#18181B"/>';
+      mouthMarkup = '<ellipse cx="50" cy="67" rx="4.5" ry="5.5" fill="#FE2C55"/>';
+      extra = '<path d="M77 36 Q81 42 77 46 Q73 42 77 36" fill="#38BDF8"/>';
+    } else if (mood === 'mild') {
+      eyeMarkup =
+        '<path d="M32 54 Q38 49 44 54" fill="none" stroke="#FFFBF0" stroke-width="2.5" stroke-linecap="round"/>' +
+        '<path d="M56 54 Q62 49 68 54" fill="none" stroke="#FFFBF0" stroke-width="2.5" stroke-linecap="round"/>';
+      mouthMarkup = '<path d="M45 67 Q50 64 55 67" fill="none" stroke="#FFFBF0" stroke-width="2.2" stroke-linecap="round"/>';
+      extra = '<path d="M76 38 Q80 44 76 48 Q72 44 76 38" fill="#38BDF8"/>';
+    } else if (mood === 'taiji') {
+      eyeMarkup =
+        '<circle cx="38" cy="54" r="5" fill="#FFFBF0"/><circle cx="38" cy="54" r="2" fill="#18181B"/>' +
+        '<circle cx="62" cy="54" r="5" fill="#FFFBF0"/><circle cx="62" cy="54" r="2" fill="#18181B"/>' +
+        '<rect x="30" y="48" width="16" height="12" rx="3" fill="none" stroke="#FDE047" stroke-width="1.8"/>' +
+        '<rect x="54" y="48" width="16" height="12" rx="3" fill="none" stroke="#FDE047" stroke-width="1.8"/>' +
+        '<line x1="46" y1="53" x2="54" y2="53" stroke="#FDE047" stroke-width="1.8"/>';
+    } else if (mood === 'crazy') {
+      eyeMarkup =
+        '<rect x="29" y="48" width="18" height="10" rx="2" fill="#111827" stroke="#FDE047" stroke-width="1.8"/>' +
+        '<rect x="53" y="48" width="18" height="10" rx="2" fill="#111827" stroke="#FDE047" stroke-width="1.8"/>' +
+        '<line x1="47" y1="52" x2="53" y2="52" stroke="#FDE047" stroke-width="2"/>' +
+        '<line x1="33" y1="51" x2="39" y2="55" stroke="#FE2C55" stroke-width="2"/>' +
+        '<line x1="57" y1="51" x2="63" y2="55" stroke="#FE2C55" stroke-width="2"/>';
+      mouthMarkup = '<path d="M43 65 Q50 74 57 65 Z" fill="#FE2C55"/>';
+      extra = '<path d="M16 32 L21 20 L26 28 L31 16 L34 30 Z" fill="#FE2C55"/><path d="M70 28 L75 16 L80 26 L85 18 L86 32 Z" fill="#F59E0B"/>';
+    } else {
+      eyeMarkup =
+        '<path d="M33 55 Q38 48 43 55" fill="none" stroke="#FDE047" stroke-width="2.8" stroke-linecap="round"/>' +
+        '<path d="M57 55 Q62 48 67 55" fill="none" stroke="#FDE047" stroke-width="2.8" stroke-linecap="round"/>';
+      mouthMarkup = '<path d="M44 65 Q50 72 56 65" fill="none" stroke="#FFFBF0" stroke-width="2.5" stroke-linecap="round"/>';
+      extra = '<rect x="70" y="64" width="22" height="14" rx="3" fill="#DC2626" stroke="#18181B" stroke-width="1.5" transform="rotate(-12 81 71)"/><text x="81" y="74" font-size="8" font-weight="900" fill="#FFF" text-anchor="middle" transform="rotate(-12 81 71)">赢</text>';
+    }
+
+    return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<circle cx="50" cy="52" r="44" fill="' + bgCircle + '" stroke="#18181B" stroke-width="2.5"/>' +
+      extra +
+      '<polygon points="24,42 20,16 42,30" fill="#18181B"/>' +
+      '<polygon points="76,42 80,16 58,30" fill="#18181B"/>' +
+      '<polygon points="25,38 23,23 36,31" fill="#FDA4AF"/>' +
+      '<polygon points="75,38 77,23 64,31" fill="#FDA4AF"/>' +
+      '<ellipse cx="50" cy="57" rx="30" ry="26" fill="#18181B"/>' +
+      '<ellipse cx="32" cy="61" rx="4" ry="2.2" fill="#FDA4AF" opacity="0.7"/>' +
+      '<ellipse cx="68" cy="61" rx="4" ry="2.2" fill="#FDA4AF" opacity="0.7"/>' +
+      eyeMarkup + mouthMarkup +
+      '<rect x="6" y="79" width="44" height="16" rx="6" fill="#FFFFFF" stroke="#18181B" stroke-width="1.8"/>' +
+      '<text x="28" y="90" font-size="8.5" font-weight="800" fill="#18181B" text-anchor="middle">' + propBadge + '</text>' +
+      '</svg>';
+  }
+
+  function emitTelemetry(eventName, payload) {
+    telemetry = E.recordEvent(telemetry, eventName, {
+      scenarioId: session.scenarioId,
+      sessionId: session.sessionId,
+      revision: session.revision,
+      payload: payload || {}
+    });
+    renderTelemetry();
+  }
+
+  function stopAutoReel(completedNaturally) {
+    for (var i = 0; i < autoReelTimers.length; i++) clearTimeout(autoReelTimers[i]);
+    autoReelTimers = [];
+    autoReelRunning = false;
+    document.getElementById('auto-reel-overlay').classList.remove('visible');
+    var btn = document.getElementById('btn-auto-reel');
+    btn.classList.remove('running');
+    btn.textContent = '🎬 演播14秒宣发片';
+    if (completedNaturally) showToast('14秒全流程演播完成');
+  }
+
+  function bindPureTap(el, handler) {
+    var startX = 0, startY = 0, tracking = false;
+    el.addEventListener('pointerdown', function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      startX = e.clientX; startY = e.clientY; tracking = true;
+      el.classList.add('is-pressing');
+    });
+    el.addEventListener('pointermove', function (e) {
+      if (!tracking) return;
+      if (Math.hypot(e.clientX - startX, e.clientY - startY) > 10) {
+        tracking = false;
+        el.classList.remove('is-pressing');
+      }
+    });
+    el.addEventListener('pointercancel', function () {
+      tracking = false;
+      el.classList.remove('is-pressing');
+    });
+    el.addEventListener('pointerup', function (e) {
+      el.classList.remove('is-pressing');
+      if (!tracking) return;
+      tracking = false;
+      if (autoReelRunning) stopAutoReel(false);
+      handler(e);
+    });
+  }
+
+  function triggerBounceAndShake(withShake) {
+    var card = document.getElementById('l1-incoming-card');
+    card.classList.remove('bounce');
+    void card.offsetWidth;
+    card.classList.add('bounce');
+    if (withShake) {
+      var vp = document.getElementById('l1-view');
+      vp.classList.remove('shake');
+      void vp.offsetWidth;
+      vp.classList.add('shake');
+    }
+  }
+
+  function showDeltaPopup(delta) {
+    if (!delta) return;
+    var el = document.getElementById('l1-delta-float');
+    var h = delta.health || 0;
+    var b = delta.bonus || 0;
+    el.textContent = (h >= 0 ? '乳腺 +' + h + '%' : '乳腺 ' + h + '%') + ' · 年终奖 ' + (b >= 0 ? '+' + b : b);
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+
+  function setStage(stage) {
+    currentStage = stage;
+    document.getElementById('feed-promo-view').classList.toggle('visible', stage === 'feed');
+    document.getElementById('l1-view').classList.toggle('visible', stage === 'l1');
+    document.getElementById('dm-view').classList.toggle('visible', stage === 'dm');
+    document.getElementById('l2-view').classList.toggle('visible', stage === 'l2');
+
+    var showFeedChrome = (stage === 'feed' || stage === 'l1');
+    document.getElementById('dy-top-nav').style.display = showFeedChrome ? 'flex' : 'none';
+    document.getElementById('dy-right-rail').style.display = showFeedChrome ? 'flex' : 'none';
+    document.getElementById('feed-bottom-area').style.display = showFeedChrome ? 'flex' : 'none';
+    document.getElementById('btn-enter-l1').style.display = stage === 'feed' ? 'flex' : 'none';
+
+    if (stage === 'l2') {
+      var sc = E.getScenario(session.scenarioId);
+      document.getElementById('l2-restored-title').textContent = '已无损续接：' + sc.sender;
+      var stance = session.receipt
+        ? session.receipt.r1Label + ' → ' + session.receipt.r2Label + '（' + session.receipt.badge + '）'
+        : (session.r1ChoiceId ? '已选首轮策略，继续深度定制' : '直接从当前场景进入规则编译');
+      document.getElementById('l2-restored-stance').textContent = '卡内带入策略：' + stance;
+      renderArchiveFooter();
+    }
+    if (stage === 'dm') {
+      var scDm = E.getScenario(session.scenarioId);
+      var q = E.encodeHandoff({
+        scenarioId: scDm.id,
+        r1ChoiceId: session.r1ChoiceId || scDm.round1Choices[2].id,
+        r2ChoiceId: session.r2ChoiceId || scDm.round1Choices[2].round2Choices[0].id
+      });
+      document.getElementById('dm-card-title').textContent = '⚡ 好友发起同题盲测：' + scDm.tag;
+      document.getElementById('dm-query-preview').textContent = q;
+    }
+    updateJourneyPills();
+  }
+
+  function updateJourneyPills() {
+    var commentOpen = document.getElementById('comment-drawer').classList.contains('visible');
+    var activeIdx = 1;
+    if (commentOpen) activeIdx = 3;
+    else if (currentStage === 'feed') activeIdx = 0;
+    else if (currentStage === 'dm') activeIdx = 4;
+    else if (currentStage === 'l2') activeIdx = 5;
+    else if (currentStage === 'l1') activeIdx = session.phase === 'ENTRY' ? 1 : 2;
+
+    for (var i = 0; i < 6; i++) {
+      document.getElementById('nav-step-' + i).classList.toggle('active', i === activeIdx);
+    }
+  }
+
+  function renderFeedPromo() {
+    var sc = E.getScenario(session.scenarioId);
+    var script = E.PROMO_SCRIPTS.find(function (p) { return p.scenarioId === sc.id; }) || E.PROMO_SCRIPTS[0];
+    document.getElementById('promo-hook-title').textContent = script.title.replace(/[《》]/g, '');
+    document.getElementById('promo-cat-slot').innerHTML = renderCatMascot('shocked', sc.id, 54);
+    document.getElementById('promo-sim-msg').textContent = sc.sender + '：' + sc.incomingText;
+    document.getElementById('feed-video-desc').textContent = script.douyinTitle;
+  }
+
+  function getBattleCatMood() {
+    if (session.phase === 'FINISHED') return 'victory';
+    if (session.phase === 'COUNTER' && session.history[0]) {
+      return session.history[0].tier || 'taiji';
+    }
+    return 'shocked';
+  }
+
+  function renderL1() {
+    var sc = E.getScenario(session.scenarioId);
+    document.getElementById('l1-scenario-tag').textContent = sc.tag;
+    document.getElementById('entry-sender').textContent = '💬 ' + sc.sender;
+    document.getElementById('entry-incoming-text').textContent = sc.incomingText;
+    document.getElementById('entry-cat-slot').innerHTML = renderCatMascot('shocked', sc.id, 114);
+
+    var blindBanner = document.getElementById('l1-blind-banner');
+    if (handoff.restored && handoff.scenarioId === sc.id && session.phase !== 'FINISHED') {
+      blindBanner.textContent = '好友发来同题盲测：先独自选完，再亮出你们的策略反差！';
+      blindBanner.classList.add('visible');
+    } else {
+      blindBanner.classList.remove('visible');
+    }
+
+    var isEntry = session.phase === 'ENTRY';
+    document.getElementById('l1-stage-entry').style.display = isEntry ? 'flex' : 'none';
+    document.getElementById('l1-battle-stage').classList.toggle('visible', !isEntry);
+
+    if (!isEntry) {
+      document.getElementById('battle-cat-slot').innerHTML = renderCatMascot(getBattleCatMood(), sc.id, 56);
+      document.getElementById('l1-sender').textContent = sc.sender;
+      document.getElementById('l1-incoming-text').textContent = sc.incomingText;
+      document.getElementById('lbl-bonus').textContent = sc.meterLabels.bonus;
+      document.getElementById('lbl-health').textContent = sc.meterLabels.health;
+      document.getElementById('val-bonus').textContent = String(session.meters.bonus);
+      document.getElementById('val-health').textContent = String(session.meters.health);
+      document.getElementById('bar-bonus').style.width = session.meters.bonus + '%';
+      document.getElementById('bar-health').style.width = session.meters.health + '%';
+
+      document.getElementById('l1-stage-ready').style.display = session.phase === 'READY' ? 'flex' : 'none';
+      document.getElementById('l1-stage-counter').style.display = session.phase === 'COUNTER' ? 'flex' : 'none';
+      document.getElementById('l1-stage-finished').style.display = session.phase === 'FINISHED' ? 'flex' : 'none';
+
+      if (session.phase === 'READY') {
+        for (var i = 0; i < 3; i++) {
+          document.getElementById('r1-title-' + i).textContent = sc.round1Choices[i].label;
+          document.getElementById('r1-sub-' + i).textContent = sc.round1Choices[i].subtitle;
+        }
+        document.getElementById('l1-typing-hint').textContent = '';
+      } else if (session.phase === 'COUNTER') {
+        var r1 = sc.round1Choices.find(function (c) { return c.id === session.r1ChoiceId; });
+        var recallEl = document.getElementById('l1-recall-tag');
+        if (r1.recalledNotice) {
+          recallEl.textContent = r1.recalledNotice;
+          recallEl.classList.add('visible');
+        } else {
+          recallEl.classList.remove('visible');
+        }
+        document.getElementById('l1-r1-picked-tag').textContent = r1.label;
+        document.getElementById('l1-r1-reply-text').textContent = r1.reply;
+        document.getElementById('l1-counter-text').textContent = r1.opponentCounter;
+        document.getElementById('l1-counter-os').textContent = r1.opponentInnerOS;
+        document.getElementById('btn-r2-0').textContent = r1.round2Choices[0].label;
+        document.getElementById('btn-r2-1').textContent = r1.round2Choices[1].label;
+      } else if (session.phase === 'FINISHED' && session.receipt) {
+        var rc = session.receipt;
+        document.getElementById('l1-badge').textContent = rc.badge;
+        document.getElementById('l1-damage-tag').textContent = rc.damageTag;
+        document.getElementById('l1-stance-label').textContent = rc.stanceLabel;
+        document.getElementById('l1-final-reply').textContent = rc.finalReply;
+        document.getElementById('l1-final-os').textContent = rc.opponentFinalOS;
+        document.getElementById('l1-demo-ratio').textContent = rc.demoRatioLabel;
+        document.getElementById('l1-ai-notice').textContent = rc.aiNotice;
+
+        var peerEl = document.getElementById('l1-peer-compare');
+        if (handoff.restored && handoff.scenarioId === sc.id) {
+          var same = handoff.peerR1.id === rc.r1ChoiceId && handoff.peerR2.id === rc.r2ChoiceId;
+          peerEl.textContent = '好友同题盲测：' + handoff.peerSummary + (same ? '（完全默契！）' : '（策略反差拉满）');
+          peerEl.classList.add('visible');
+        } else {
+          peerEl.classList.remove('visible');
+        }
+      }
+    }
+    updateJourneyPills();
+  }
+
+  /* Real Canvas PNG Thermal Receipt Poster Export */
+  function drawWrappedLines(ctx, text, x, y, maxWidth, lineHeight) {
+    var chars = String(text || '').split('');
+    var line = '';
+    var curY = y;
+    for (var i = 0; i < chars.length; i++) {
+      var testLine = line + chars[i];
+      if (ctx.measureText(testLine).width > maxWidth && line) {
+        ctx.fillText(line, x, curY);
+        line = chars[i];
+        curY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    if (line) {
+      ctx.fillText(line, x, curY);
+      curY += lineHeight;
+    }
+    return curY;
+  }
+
+  function openPosterModal() {
+    var rc = session.receipt;
+    if (!rc) { showToast('请先完成两轮对决生成小票'); return; }
+    try {
+      var canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 900;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#FFFBF0';
+      ctx.fillRect(0, 0, 640, 900);
+
+      ctx.strokeStyle = '#18181B';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(24, 24, 592, 852);
+
+      ctx.fillStyle = '#FE2C55';
+      ctx.fillRect(42, 42, 556, 74);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.fillText('《这句怎么回》当代嘴替战绩小票', 64, 88);
+
+      ctx.fillStyle = '#18181B';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText(rc.sender + ' · ' + rc.stanceLabel, 48, 162);
+
+      ctx.strokeStyle = '#DC2626';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(410, 130, 174, 54);
+      ctx.fillStyle = '#DC2626';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillText(rc.badge, 426, 165);
+
+      ctx.fillStyle = '#52525B';
+      ctx.font = '20px sans-serif';
+      var nextY = drawWrappedLines(ctx, '原消息：' + rc.incomingText, 48, 212, 540, 30);
+
+      ctx.fillStyle = '#F4F4F5';
+      ctx.fillRect(44, nextY + 12, 552, 180);
+      ctx.fillStyle = '#0F766E';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('终极体面神回复：', 62, nextY + 46);
+      ctx.fillStyle = '#18181B';
+      ctx.font = 'bold 22px sans-serif';
+      drawWrappedLines(ctx, rc.finalReply, 62, nextY + 84, 514, 34);
+
+      ctx.fillStyle = '#FEF3C7';
+      ctx.fillRect(44, nextY + 210, 552, 120);
+      ctx.fillStyle = '#991B1B';
+      ctx.font = 'bold 20px sans-serif';
+      drawWrappedLines(ctx, rc.opponentFinalOS, 62, nextY + 250, 514, 30);
+
+      ctx.fillStyle = '#18181B';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText('战果：' + rc.damageTag + ' ｜ ' + rc.demoRatioLabel, 48, nextY + 375);
+
+      ctx.fillStyle = '#71717A';
+      ctx.font = '18px sans-serif';
+      ctx.fillText(rc.aiNotice + ' · 抖音AI兴趣卡参赛原型', 48, 840);
+
+      var dataUrl = canvas.toDataURL('image/png');
+      document.getElementById('poster-img').src = dataUrl;
+      document.getElementById('poster-download').href = dataUrl;
+      document.getElementById('poster-modal').classList.add('visible');
+    } catch (_err) {
+      showToast('当前环境不支持导出 Canvas 海报');
+    }
+  }
+
+  function renderComments() {
+    var listEl = document.getElementById('cd-list');
+    listEl.innerHTML = '';
+    var merged = customComments.concat(E.MOCK_COMMENTS[session.scenarioId] || []);
+    merged.forEach(function (c) {
+      var item = document.createElement('div');
+      item.className = 'cd-item';
+      var head = document.createElement('div');
+      head.className = 'cd-user';
+      var n = document.createElement('span'); n.textContent = c.user;
+      var b = document.createElement('span'); b.className = 'cd-badge'; b.textContent = c.badgeTag;
+      head.appendChild(n); head.appendChild(b);
+      var body = document.createElement('div'); body.textContent = c.text;
+      item.appendChild(head); item.appendChild(body);
+      listEl.appendChild(item);
+    });
+  }
+
+  function runL2Compile(resolvedPriority) {
+    var rawInput = document.getElementById('l2-input').value;
+    var simulateTimeout = document.getElementById('chk-sim-timeout').checked;
+    var res = E.runL2ConstraintSandbox({
+      scenarioId: session.scenarioId,
+      r1ChoiceId: session.r1ChoiceId,
+      r2ChoiceId: session.r2ChoiceId,
+      rawInput: rawInput,
+      resolvedPriority: resolvedPriority || '',
+      simulateTimeout: simulateTimeout
+    });
+
+    emitTelemetry('l2_compile', { status: res.status, style: res.compiled ? res.compiled.style : 'none' });
+
+    var pill = document.getElementById('l2-status-pill');
+    var prioPanel = document.getElementById('l2-priority-panel');
+    var chipsEl = document.getElementById('l2-compiled-chips');
+    chipsEl.innerHTML = '';
+
+    if (res.compiled) {
+      var sTag = document.createElement('span');
+      sTag.className = 'c-tag';
+      sTag.textContent = 'style:' + res.compiled.style;
+      chipsEl.appendChild(sTag);
+      res.compiled.hardBans.forEach(function (b) {
+        var el = document.createElement('span'); el.className = 'c-tag ban'; el.textContent = '禁:' + b; chipsEl.appendChild(el);
+      });
+      res.compiled.intents.forEach(function (it) {
+        var el = document.createElement('span'); el.className = 'c-tag ok'; el.textContent = it; chipsEl.appendChild(el);
+      });
+    }
+
+    if (res.status === 'NEEDS_PRIORITY') {
+      pill.className = 'c-tag warn';
+      pill.textContent = '需选冲突优先级';
+      document.getElementById('l2-conflict-msg').textContent = res.conflictPrompt;
+      prioPanel.classList.add('visible');
+      return;
+    }
+    prioPanel.classList.remove('visible');
+
+    if (res.status === 'OK') {
+      pill.className = 'c-tag ok'; pill.textContent = '硬约束全通过';
+    } else if (res.status === 'FALLBACK_SAFE') {
+      pill.className = 'c-tag warn'; pill.textContent = '3s 超时安全降级';
+    } else {
+      pill.className = 'c-tag ban'; pill.textContent = '安全护栏拦截';
+    }
+
+    document.getElementById('l2-out-baseline').textContent = res.baselineTemplateReply;
+    document.getElementById('l2-out-final').textContent = res.finalReply;
+    document.getElementById('l2-ai-notice').textContent = res.aiNotice;
+  }
+
+  function renderArchiveFooter() {
+    var bytes = E.getArchiveByteLength(archive);
+    document.getElementById('archive-meter').textContent =
+      '本地归档：' + bytes + ' / ' + E.ARCHIVE_MAX_BYTES + ' B（' + archive.recentCases.length + '/' + E.ARCHIVE_MAX_ITEMS + ' 条）';
+  }
+
+  function renderPromoWarRoom() {
+    var p = E.PROMO_SCRIPTS[selectedScriptIdx] || E.PROMO_SCRIPTS[0];
+    document.getElementById('wr-script-title').textContent = p.title;
+    document.getElementById('wr-douyin-title').textContent = p.douyinTitle;
+    document.getElementById('wr-pinned-comment').textContent = p.pinnedComment;
+    var tbody = document.getElementById('wr-script-tbody');
+    tbody.innerHTML = '';
+    p.timeline.forEach(function (row) {
+      var tr = document.createElement('tr');
+      var td1 = document.createElement('td'); td1.textContent = row.sec;
+      var td2 = document.createElement('td'); td2.textContent = row.screen;
+      var td3 = document.createElement('td'); td3.textContent = row.caption;
+      tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+      tbody.appendChild(tr);
+    });
+    for (var i = 0; i < 3; i++) {
+      document.getElementById('sc-btn-' + i).classList.toggle('active', i === selectedScriptIdx);
+    }
+  }
+
+  function renderDiagnosis() {
+    var d = E.FUNNEL_DIAGNOSIS[selectedDiagIdx] || E.FUNNEL_DIAGNOSIS[0];
+    document.getElementById('diag-detail').innerHTML =
+      '<div><strong>判定阈值：</strong>' + d.threshold + '</div>' +
+      '<div style="margin-top:5px;"><strong>根本病因：</strong>' + d.cause + '</div>' +
+      '<div style="margin-top:5px;"><strong>V1→V2 单变量改法：</strong>' + d.v2Fix + '</div>';
+    for (var i = 0; i < 4; i++) {
+      document.getElementById('diag-btn-' + i).classList.toggle('active', i === selectedDiagIdx);
+    }
+  }
+
+  function renderTelemetry() {
+    var labels = [
+      ['feed_impression', '① 刷流宣发曝光'],
+      ['card_open', '② 进兴趣卡进入界面'],
+      ['entry_cta_tap', '③ 点接招开打'],
+      ['r1_tap', '④ 一轮火力点选'],
+      ['r2_complete', '⑤ 两轮吐小票'],
+      ['copy_reply', '⑥ 复制回复话术'],
+      ['comment_open', '⑦ 评论区盖楼'],
+      ['dm_preview_open', '⑧ 私信盲测触达'],
+      ['l2_enter', '⑨ 落地页二跳'],
+      ['l2_compile', '⑩ 实时约束编译']
+    ];
+    var maxVal = 1;
+    labels.forEach(function (pair) {
+      if ((telemetry.counts[pair[0]] || 0) > maxVal) maxVal = telemetry.counts[pair[0]];
+    });
+    var container = document.getElementById('funnel-bars');
+    container.innerHTML = '';
+    labels.forEach(function (pair) {
+      var val = telemetry.counts[pair[0]] || 0;
+      var row = document.createElement('div'); row.className = 'f-row';
+      var lbl = document.createElement('span'); lbl.textContent = pair[1];
+      var track = document.createElement('div'); track.className = 'f-track';
+      var fill = document.createElement('div'); fill.className = 'f-fill';
+      fill.style.width = Math.max(4, Math.round((val / maxVal) * 100)) + '%';
+      track.appendChild(fill);
+      var cnt = document.createElement('strong'); cnt.style.textAlign = 'right'; cnt.textContent = String(val);
+      row.appendChild(lbl); row.appendChild(track); row.appendChild(cnt);
+      container.appendChild(row);
+    });
+    var latest = telemetry.recentEnvelopes[0] || E.createEnvelope({
+      scenarioId: session.scenarioId, sessionId: session.sessionId,
+      revision: session.revision, kind: 'init', payload: { phase: session.phase }
+    });
+    document.getElementById('json-log').textContent = JSON.stringify(latest, null, 2);
+  }
+
+  function pickRound1ByIndex(idx) {
+    var sc = E.getScenario(session.scenarioId);
+    var choice = sc.round1Choices[idx];
+    playSfx('pop');
+    clearTimeout(typingTimer);
+    session = E.selectRound1(session, choice.id);
+    showDeltaPopup(choice.meterDelta);
+    triggerBounceAndShake(false);
+    emitTelemetry('r1_tap', { choiceId: choice.id });
+    renderL1();
+    document.getElementById('l1-typing-hint').textContent = '对方正在输入中...';
+    typingTimer = setTimeout(function () {
+      playSfx('tick');
+      document.getElementById('l1-typing-hint').textContent = choice.recalledNotice ? '⚠ 对方刚撤回一条消息' : '已反扑';
+    }, 380);
+  }
+
+  function pickRound2ByIndex(idx) {
+    var sc = E.getScenario(session.scenarioId);
+    var r1 = sc.round1Choices.find(function (c) { return c.id === session.r1ChoiceId; });
+    var r2 = r1.round2Choices[idx];
+    playSfx('stamp');
+    session = E.selectRound2(session, r2.id);
+    showDeltaPopup(r2.meterDelta);
+    archive = E.appendArchiveCase(archive, {
+      id: session.sessionId, scenarioId: session.scenarioId,
+      r1Label: session.receipt.r1Label, r2Label: session.receipt.r2Label, badge: session.receipt.badge
+    });
+    safeSetStorage(ARCHIVE_KEY, E.serializeArchive(archive));
+    triggerBounceAndShake(true);
+    emitTelemetry('r2_complete', { badge: session.receipt.badge });
+    renderL1();
+    renderArchiveFooter();
+  }
+
+  /* Bind Entry & Card Pure-Tap Events */
+  bindPureTap(document.getElementById('btn-switch-scenario'), function () {
+    playSfx('pop');
+    var ids = Object.keys(E.L1_SCENARIOS);
+    var nextId = ids[(ids.indexOf(session.scenarioId) + 1) % ids.length];
+    session = E.switchScenario(session, nextId);
+    renderFeedPromo();
+    renderL1();
+  });
+
+  bindPureTap(document.getElementById('btn-entry-start'), function () {
+    playSfx('pop');
+    session = E.enterCard(session);
+    emitTelemetry('entry_cta_tap', {});
+    triggerBounceAndShake(false);
+    renderL1();
+  });
+
+  [0, 1, 2].forEach(function (idx) {
+    bindPureTap(document.getElementById('btn-fan-' + idx), function () {
+      emitTelemetry('entry_cta_tap', { directTier: idx });
+      pickRound1ByIndex(idx);
+    });
+    bindPureTap(document.getElementById('btn-r1-' + idx), function () {
+      pickRound1ByIndex(idx);
+    });
+  });
+
+  bindPureTap(document.getElementById('btn-r2-0'), function () { pickRound2ByIndex(0); });
+  bindPureTap(document.getElementById('btn-r2-1'), function () { pickRound2ByIndex(1); });
+
+  bindPureTap(document.getElementById('btn-copy-r1'), function () {
+    emitTelemetry('copy_reply', { round: 1 });
+    copyText(document.getElementById('l1-r1-reply-text').textContent, '已复制首轮回复');
+  });
+  bindPureTap(document.getElementById('btn-copy-final'), function () {
+    emitTelemetry('copy_reply', { round: 2 });
+    copyText(document.getElementById('l1-final-reply').textContent, '已复制终极神回复');
+  });
+
+  bindPureTap(document.getElementById('btn-go-l2'), function () {
+    emitTelemetry('l2_enter', {});
+    setStage('l2');
+    runL2Compile();
+  });
+  bindPureTap(document.getElementById('btn-open-poster'), function () { openPosterModal(); });
+  bindPureTap(document.getElementById('btn-share-blind'), function () {
+    emitTelemetry('dm_preview_open', {});
+    setStage('dm');
+  });
+  bindPureTap(document.getElementById('btn-open-comments'), function () {
+    emitTelemetry('comment_open', {});
+    renderComments();
+    document.getElementById('comment-drawer').classList.add('visible');
+    updateJourneyPills();
+  });
+  bindPureTap(document.getElementById('btn-replay'), function () {
+    session = E.resetSession(session);
+    renderL1();
+  });
+
+  /* Feed Promo & Douyin Chrome Controls */
+  document.getElementById('btn-enter-l1').addEventListener('click', function () {
+    if (autoReelRunning) stopAutoReel(false);
+    emitTelemetry('card_open', { from: 'feed_anchor' });
+    setStage('l1');
+    renderL1();
+  });
+  document.getElementById('btn-swipe-to-entry').addEventListener('click', function () {
+    if (autoReelRunning) stopAutoReel(false);
+    emitTelemetry('card_open', { from: 'feed_swipe' });
+    setStage('l1');
+    renderL1();
+  });
+  document.getElementById('btn-dy-like').addEventListener('click', function () {
+    isLiked = !isLiked;
+    this.classList.toggle('liked', isLiked);
+    document.getElementById('dy-like-count').textContent = isLiked ? '2.4w+' : '2.4w';
+  });
+  document.getElementById('btn-dy-comment').addEventListener('click', function () {
+    emitTelemetry('comment_open', {});
+    renderComments();
+    document.getElementById('comment-drawer').classList.add('visible');
+    updateJourneyPills();
+  });
+  document.getElementById('btn-dy-fav').addEventListener('click', function () { showToast('已收藏“码住防身”'); });
+  document.getElementById('btn-dy-share').addEventListener('click', function () {
+    emitTelemetry('dm_preview_open', {});
+    setStage('dm');
+  });
+
+  /* Comment, Poster & DM Controls */
+  document.getElementById('btn-close-comments').addEventListener('click', function () {
+    document.getElementById('comment-drawer').classList.remove('visible');
+    updateJourneyPills();
+  });
+  document.getElementById('btn-post-my-badge').addEventListener('click', function () {
+    var rc = session.receipt;
+    var badge = rc ? rc.badge : '围观试玩党';
+    var txt = rc ? ('刚打出【' + rc.badge + '】！那句“' + rc.finalReply.slice(0, 20) + '…”太解气') : '被这只黑猫笑死，体面发疯版真敢发吗？';
+    customComments.unshift({ user: '我（当前试玩）', badgeTag: badge, text: txt });
+    document.getElementById('dy-comment-count').textContent = String(318 + customComments.length);
+    renderComments();
+    showToast('已晒出战绩到模拟评论区');
+  });
+  document.getElementById('btn-close-poster').addEventListener('click', function () {
+    document.getElementById('poster-modal').classList.remove('visible');
+  });
+  document.getElementById('btn-dm-back').addEventListener('click', function () {
+    setStage('l1');
+    renderL1();
+  });
+  document.getElementById('btn-dm-copy').addEventListener('click', function () {
+    var q = document.getElementById('dm-query-preview').textContent;
+    emitTelemetry('voluntary_share', { query: q });
+    copyText(q, '已复制公开盲测参数（零隐私原文）');
+  });
+  document.getElementById('btn-dm-act-friend').addEventListener('click', function () {
+    var q = document.getElementById('dm-query-preview').textContent;
+    handoff = E.decodeHandoff(q);
+    session = E.createSession(handoff.scenarioId);
+    setStage('l1');
+    renderL1();
+    showToast('正以“好友视角”点开盲测卡：先独自选择看反差');
+  });
+
+  /* L2 Controls */
+  document.getElementById('btn-back-l1').addEventListener('click', function () { setStage('l1'); renderL1(); });
+  document.getElementById('btn-compile-l2').addEventListener('click', function () { runL2Compile(); });
+  document.getElementById('chip-zhenhuan').addEventListener('click', function () { document.getElementById('l2-input').value = '甄嬛体、不提钱、婉拒借充电宝'; runL2Compile(); });
+  document.getElementById('chip-commute').addEventListener('click', function () { document.getElementById('l2-input').value = '对方赶车、我能指路、坚决不背锅'; runL2Compile(); });
+  document.getElementById('chip-crazy').addEventListener('click', function () { document.getElementById('l2-input').value = '发疯文学、不提加班'; runL2Compile(); });
+  document.getElementById('chip-conflict').addEventListener('click', function () { document.getElementById('l2-input').value = '立刻答应同时坚决拒绝'; runL2Compile(); });
+  document.getElementById('btn-prio-decline').addEventListener('click', function () { runL2Compile('prefer_decline'); });
+  document.getElementById('btn-prio-accept').addEventListener('click', function () { runL2Compile('prefer_accept'); });
+  document.getElementById('btn-copy-l2').addEventListener('click', function () {
+    emitTelemetry('copy_reply', { round: 'L2' });
+    copyText(document.getElementById('l2-out-final').textContent, '已复制落地页定制终答');
+  });
+  document.getElementById('btn-clear-archive').addEventListener('click', function () {
+    archive = E.clearArchive();
+    safeSetStorage(ARCHIVE_KEY, E.serializeArchive(archive));
+    renderArchiveFooter();
+    showToast('已清空本地归档记录');
+  });
+
+  /* Top Navigation Bar & Toggles */
+  document.getElementById('nav-step-0').addEventListener('click', function () {
+    stopAutoReel(false); document.getElementById('comment-drawer').classList.remove('visible');
+    setStage('feed'); renderFeedPromo();
+  });
+  document.getElementById('nav-step-1').addEventListener('click', function () {
+    stopAutoReel(false); document.getElementById('comment-drawer').classList.remove('visible');
+    session = E.resetSession(session); setStage('l1'); renderL1();
+  });
+  document.getElementById('nav-step-2').addEventListener('click', function () {
+    stopAutoReel(false); document.getElementById('comment-drawer').classList.remove('visible');
+    if (session.phase === 'ENTRY') session = E.enterCard(session);
+    setStage('l1'); renderL1();
+  });
+  document.getElementById('nav-step-3').addEventListener('click', function () {
+    stopAutoReel(false); if (currentStage === 'l2' || currentStage === 'dm') setStage('l1');
+    renderComments(); document.getElementById('comment-drawer').classList.add('visible'); updateJourneyPills();
+  });
+  document.getElementById('nav-step-4').addEventListener('click', function () {
+    stopAutoReel(false); document.getElementById('comment-drawer').classList.remove('visible');
+    emitTelemetry('dm_preview_open', {}); setStage('dm');
+  });
+  document.getElementById('nav-step-5').addEventListener('click', function () {
+    stopAutoReel(false); document.getElementById('comment-drawer').classList.remove('visible');
+    setStage('l2'); runL2Compile();
+  });
+
+  document.getElementById('btn-toggle-sfx').addEventListener('click', function () {
+    sfxEnabled = !sfxEnabled;
+    this.classList.toggle('active', sfxEnabled);
+    this.textContent = sfxEnabled ? '🔊 音效：开' : '🔇 音效：关';
+    if (sfxEnabled) playSfx('pop');
+  });
+  document.getElementById('btn-toggle-safezone').addEventListener('click', function () {
+    safeZoneVisible = !safeZoneVisible;
+    document.getElementById('safe-overlay').classList.toggle('visible', safeZoneVisible);
+    this.classList.toggle('active', safeZoneVisible);
+    this.textContent = safeZoneVisible ? '安全区红线：开' : '安全区红线';
+  });
+  document.getElementById('btn-toggle-warroom').addEventListener('click', function () {
+    warRoomVisible = !warRoomVisible;
+    document.getElementById('workspace').classList.toggle('war-hidden', !warRoomVisible);
+    this.classList.toggle('active', warRoomVisible);
+    this.textContent = warRoomVisible ? '作战台：显' : '作战台：隐';
+  });
+
+  document.getElementById('btn-auto-reel').addEventListener('click', function () {
+    if (autoReelRunning) { stopAutoReel(false); return; }
+    autoReelRunning = true;
+    document.getElementById('comment-drawer').classList.remove('visible');
+    this.classList.add('running');
+    this.textContent = '⏹ 停止演播';
+    var overlay = document.getElementById('auto-reel-overlay');
+    var sub = document.getElementById('rec-subtitle');
+    overlay.classList.add('visible');
+
+    session = E.resetSession(session);
+    setStage('feed');
+    renderFeedPromo();
+    sub.textContent = '【0–2.5s 宣发钩子】周六半夜收到这种消息，千万别直接回“收到”！';
+
+    autoReelTimers.push(setTimeout(function () {
+      emitTelemetry('card_open', { from: 'auto_reel' });
+      setStage('l1');
+      renderL1();
+      sub.textContent = '【2.5–4.5s 兴趣卡进入界面】0打字！黑猫心率报警，点一下立刻接招！';
+    }, 2500));
+
+    autoReelTimers.push(setTimeout(function () {
+      session = E.enterCard(session);
+      emitTelemetry('entry_cta_tap', { from: 'auto_reel' });
+      renderL1();
+      sub.textContent = '【4.5–6s 三档技能卡】选【🔴 体面发疯版】，乳腺畅通直接起飞！';
+    }, 4500));
+
+    autoReelTimers.push(setTimeout(function () {
+      pickRound1ByIndex(2);
+      sub.textContent = '【6–8s 反转】老板当场撤回消息+内心破防！再点锁死明早！';
+    }, 6200));
+
+    autoReelTimers.push(setTimeout(function () {
+      pickRound2ByIndex(0);
+      sub.textContent = '【8–10.5s 战绩小票】红印盖章！可复制回复+导出小票海报！';
+    }, 8400));
+
+    autoReelTimers.push(setTimeout(function () {
+      emitTelemetry('l2_enter', { from: 'auto_reel' });
+      setStage('l2');
+      document.getElementById('l2-input').value = '甄嬛体、不提钱、婉拒借充电宝';
+      runL2Compile();
+      sub.textContent = '【10.5–14s 落地页升维】一句话规则实时编译，点左下角自己试！';
+    }, 10600));
+
+    autoReelTimers.push(setTimeout(function () { stopAutoReel(true); }, 14000));
+  });
+
+  /* War-Room Controls */
+  function setWarTab(name) {
+    ['promo', 'sop', 'telemetry'].forEach(function (t) {
+      document.getElementById('tab-' + t).classList.toggle('active', t === name);
+      document.getElementById('pane-' + t).classList.toggle('active', t === name);
+    });
+  }
+  document.getElementById('tab-promo').addEventListener('click', function () { setWarTab('promo'); });
+  document.getElementById('tab-sop').addEventListener('click', function () { setWarTab('sop'); });
+  document.getElementById('tab-telemetry').addEventListener('click', function () { setWarTab('telemetry'); });
+
+  [0, 1, 2].forEach(function (idx) {
+    document.getElementById('sc-btn-' + idx).addEventListener('click', function () {
+      selectedScriptIdx = idx;
+      renderPromoWarRoom();
+    });
+  });
+
+  document.getElementById('btn-copy-script').addEventListener('click', function () {
+    var p = E.PROMO_SCRIPTS[selectedScriptIdx];
+    var txt = p.title + '\n' + p.timeline.map(function (r) { return r.sec + '｜' + r.screen + '｜' + r.caption; }).join('\n') +
+      '\n标题：' + p.douyinTitle + '\n置顶评论：' + p.pinnedComment;
+    copyText(txt, '已复制完整15秒宣发脚本');
+  });
+
+  document.getElementById('btn-preview-in-phone').addEventListener('click', function () {
+    stopAutoReel(false);
+    var p = E.PROMO_SCRIPTS[selectedScriptIdx];
+    session = E.switchScenario(session, p.scenarioId);
+    setStage('feed');
+    renderFeedPromo();
+    renderL1();
+    showToast('左侧已切至该场景宣发短视频钩子');
+  });
+
+  [0, 1, 2, 3].forEach(function (idx) {
+    document.getElementById('diag-btn-' + idx).addEventListener('click', function () {
+      selectedDiagIdx = idx;
+      renderDiagnosis();
+    });
+  });
+
+  /* Init: Open directly on the Pop-Comic Interest Card Entry Screen (or restore DM blind-test) */
+  renderFeedPromo();
+  renderL1();
+  renderPromoWarRoom();
+  renderDiagnosis();
+  renderTelemetry();
+  renderArchiveFooter();
+  setStage('l1');
+})();
+</script>
+</body>
+</html>

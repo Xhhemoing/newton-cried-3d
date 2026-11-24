@@ -1,0 +1,19 @@
+.stage-frame > .stage-preview { z-index: 1; overflow: hidden; }
+.stage-preview .wood-shadow { margin-top: 5%; }
+.stage-preview .stage-toy-pressed { filter: brightness(1.12); }
+
+/* Let an exposed toy receive touch through the clear parts of another toy's wrapper. */
+.stage-preview .toy-hit { pointer-events: none; }
+.stage-preview .ear,
+.stage-preview .cat-head,
+.stage-preview .haunch,
+.stage-preview .paw,
+.stage-preview .tuft,
+.stage-preview .kit-wear,
+.stage-preview .prop-body,
+.stage-preview .prop-top,
+.stage-preview .prop-detail,
+.stage-preview .prop-mark,
+.stage-preview .toy-piano,
+.stage-preview .ramen,
+.stage-preview .brick { pointer-events: auto; }
